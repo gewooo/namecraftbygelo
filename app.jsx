@@ -367,7 +367,7 @@ function App() {
     setResult(current => current ? {
       ...current,
       rows: current.rows.map(row => {
-        if (!row.middle) return row;
+        if (row.id !== id || !row.middle) return row;
         const [firstMiddleWord, ...remainingMiddleWords] = clean(row.middle).split(" ");
         const first = [row.first, firstMiddleWord].filter(Boolean).join(" ");
         const middle = remainingMiddleWords.join(" ");
