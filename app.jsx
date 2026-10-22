@@ -29,6 +29,35 @@ function nameKey(value) {
   return clean(value).toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ");
 }
 
+function nameTokens(value) {
+  return clean(value).replace(/,/g, " ").split(" ").filter(Boolean);
+}
+
+function preserveNameTokens(source, parts) {
+  const available = new Map();
+  for (const token of nameTokens(source)) {
+    const key = nameKey(token);
+    available.set(key, (available.get(key) || 0) + 1);
+  }
+  for (const part of parts) {
+    for (const token of nameTokens(part)) {
+      const key = nameKey(token);
+      const remaining = available.get(key) || 0;
+      if (remaining > 0) available.set(key, remaining - 1);
+    }
+  }
+  const missing = [];
+  for (const token of nameTokens(source)) {
+    const key = nameKey(token);
+    const remaining = available.get(key) || 0;
+    if (remaining > 0) {
+      missing.push(token);
+      available.set(key, remaining - 1);
+    }
+  }
+  return missing;
+}
+
 function membershipFeeValue(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : "";
   const text = clean(value);
@@ -49,11 +78,6 @@ function findColumn(headers, candidates) {
 
 function titleCase(value) {
   return clean(value).toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase());
-}
-
-function middleInitial(value) {
-  const words = clean(value).split(" ").filter(Boolean);
-  return words.map(word => `${word[0].toUpperCase()}.`).join(" ");
 }
 
 function splitSuffix(value) {
@@ -133,24 +157,29 @@ function formatRow(row, headers, trainingData) {
   let suffix = clean(row[findColumn(headers, ["Suffix", "Payor Suffix", "Member Suffix"])]);
   const source = fullColumn ? clean(row[fullColumn]) : [last, first, middle].filter(Boolean).join(", ");
   const learned = trainingData.find(item => nameKey(item.payor_name || item.full_name) === nameKey(source));
+  const parsedSource = fullColumn ? parseFullName(source) : null;
 
   if (learned) {
     first = clean(learned.first_name);
     middle = clean(learned.middle_name);
     last = clean(learned.last_name);
+    suffix = suffix || parsedSource.suffix;
   } else if ((!first || !last) && fullColumn) {
-    const parsed = parseFullName(source);
-    const given = splitGivenName(parsed.first, trainingData);
+    const given = splitGivenName(parsedSource.first, trainingData);
     first = first || given.first;
-    middle = middle || given.middle || parsed.middle;
-    last = last || parsed.last;
-    suffix = suffix || parsed.suffix;
+    middle = middle || given.middle || parsedSource.middle;
+    last = last || parsedSource.last;
+    suffix = suffix || parsedSource.suffix;
   }
 
   const normalizedFirst = splitSuffix(first);
   first = normalizedFirst.value;
   suffix = suffix || normalizedFirst.suffix;
-  const formatted = [last, first].filter(Boolean).join(", ") + (middle ? ` ${middleInitial(middle)}` : "") + (suffix ? ` ${suffix}` : "");
+  if (fullColumn) {
+    const missing = preserveNameTokens(source, [last, first, middle, suffix]);
+    if (missing.length) middle = [middle, ...missing].filter(Boolean).join(" ");
+  }
+  const formatted = [last, first].filter(Boolean).join(", ") + (middle ? ` ${middle}` : "") + (suffix ? ` ${suffix}` : "");
   return { source, first, middle, last, suffix, formatted };
 }
 

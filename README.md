@@ -25,4 +25,6 @@ The Agent field similarly fills the `AGENT` column for every exported row when p
 
 Sex is not added automatically; existing `Sex` values are preserved and blank values remain blank.
 
+Full-name tokens are preserved in the formatted fields; middle names are not shortened to initials, and unmatched words are not discarded.
+
 The exported workbook uses a blue styled header, Aptos fonts, alternating row fills, borders, column widths, and an Excel autofilter over the `Main Encoding` table.
