@@ -23,6 +23,15 @@ function nameKey(value) {
   return clean(value).toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ");
 }
 
+function membershipFeeValue(value) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : "";
+  const text = clean(value);
+  if (!text) return "";
+  const normalized = text.replace(/[₱$,\s]/g, "");
+  const numeric = Number(normalized);
+  return Number.isFinite(numeric) ? numeric : text;
+}
+
 function findColumn(headers, candidates) {
   const keys = headers.map(headerKey);
   for (const candidate of candidates) {
@@ -194,7 +203,7 @@ function downloadWorkbook(rows, originalFileName) {
       "Occupation": value("Occupation"),
       "Employee Number": value("Employee Number", "Employee No."),
       "Email Address": value("Email Address", "Email"),
-      "Premium": value("Premium", "Membership Fee", "Membership Fee (₱)"),
+      "Premium": membershipFeeValue(value("Premium", "Membership Fee", "Membership Fee (₱)")),
       "AGENT": value("AGENT", "Agent"),
     };
   });
@@ -247,6 +256,7 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [query, setQuery] = useState("");
   const [trainingData, setTrainingData] = useState([]);
+  const [datasetLoaded, setDatasetLoaded] = useState(false);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
 
   useEffect(() => {
@@ -259,12 +269,32 @@ function App() {
         if (!Array.isArray(data)) throw new Error("Dataset must contain an array of name examples.");
         setTrainingData(data);
         setTrainingStatus(`${data.length} learned examples loaded`);
+        setDatasetLoaded(true);
       })
       .catch(error => {
         setTrainingStatus("Parser fallback active");
         setError(`Could not load dataset.json: ${error.message}`);
+        setDatasetLoaded(true);
       });
   }, []);
+
+  useEffect(() => {
+    if (!datasetLoaded) return;
+    fetch("./Files/2026 Listing Format.xlsx")
+      .then(response => {
+        if (!response.ok) throw new Error(`Workbook request failed (${response.status}).`);
+        return response.arrayBuffer();
+      })
+      .then(buffer => {
+        const file = new File([buffer], "2026 Listing Format.xlsx", {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        });
+        setError("");
+        setFileName(file.name);
+        readWorkbook(file, trainingData, setResult, setError);
+      })
+      .catch(error => setError(`Could not load the workbook in Files: ${error.message}`));
+  }, [datasetLoaded, trainingData]);
 
   const processFile = file => {
     if (!file) return;
@@ -332,7 +362,7 @@ function App() {
           {!visibleRows.length && <div className="empty-state">No names match “{query}”.</div>}
         </section>
       )}
-      <footer><span>NAMECRAFT</span><span>Local processing · Your file stays in your browser</span></footer>
+      <footer><span>NAMECRAFT</span><span className="creator-watermark">Built by Gelo Nerona</span><span>Local processing · Your file stays in your browser</span></footer>
     </main>
   );
 }
