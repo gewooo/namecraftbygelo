@@ -25,6 +25,8 @@ The Agent field similarly fills the `AGENT` column for every exported row when p
 
 Each preview row includes a `Join to first` action for moving a middle name into the first-name field.
 
+The `Join all` action applies that change to every row in the uploaded file.
+
 Sex is not added automatically; existing `Sex` values are preserved and blank values remain blank.
 
 Full-name tokens are preserved in the formatted fields; middle names are not shortened to initials, and unmatched words are not discarded.
