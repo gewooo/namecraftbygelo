@@ -256,7 +256,6 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [query, setQuery] = useState("");
   const [trainingData, setTrainingData] = useState([]);
-  const [datasetLoaded, setDatasetLoaded] = useState(false);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
 
   useEffect(() => {
@@ -269,32 +268,12 @@ function App() {
         if (!Array.isArray(data)) throw new Error("Dataset must contain an array of name examples.");
         setTrainingData(data);
         setTrainingStatus(`${data.length} learned examples loaded`);
-        setDatasetLoaded(true);
       })
       .catch(error => {
         setTrainingStatus("Parser fallback active");
         setError(`Could not load dataset.json: ${error.message}`);
-        setDatasetLoaded(true);
       });
   }, []);
-
-  useEffect(() => {
-    if (!datasetLoaded) return;
-    fetch("./Files/2026 Listing Format.xlsx")
-      .then(response => {
-        if (!response.ok) throw new Error(`Workbook request failed (${response.status}).`);
-        return response.arrayBuffer();
-      })
-      .then(buffer => {
-        const file = new File([buffer], "2026 Listing Format.xlsx", {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        });
-        setError("");
-        setFileName(file.name);
-        readWorkbook(file, trainingData, setResult, setError);
-      })
-      .catch(error => setError(`Could not load the workbook in Files: ${error.message}`));
-  }, [datasetLoaded, trainingData]);
 
   const processFile = file => {
     if (!file) return;

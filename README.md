@@ -17,6 +17,6 @@ Files are processed locally in the browser. The preview shows the first 100 matc
 
 `dataset.json` is used as a runtime reference dataset: exact Payor Name matches use its known first, middle, and last name fields; unseen names use the fallback parser.
 
-The app loads `Files/2026 Listing Format.xlsx` on startup without modifying the source workbook. Uploaded workbooks remain supported, and membership fees exported to `Premium` are numeric values without currency symbols.
+The workbook in `Files/2026 Listing Format.xlsx` is kept as a reference template and is not loaded automatically. Choose a workbook to begin processing without modifying the source file. Membership fees exported to `Premium` are numeric values without currency symbols.
 
 The exported workbook uses a blue styled header, Aptos fonts, alternating row fills, borders, column widths, and an Excel autofilter over the `Main Encoding` table.
