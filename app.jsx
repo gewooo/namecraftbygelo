@@ -297,6 +297,7 @@ function App() {
   const [page, setPage] = useState(1);
   const [companyDeployment, setCompanyDeployment] = useState("");
   const [agent, setAgent] = useState("");
+  const [agentOptions, setAgentOptions] = useState([]);
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
 
@@ -315,6 +316,25 @@ function App() {
         setTrainingStatus("Parser fallback active");
         setError(`Could not load dataset.json: ${error.message}`);
       });
+  }, []);
+
+  useEffect(() => {
+    fetch("./Files/LIST OF AGENTS.xlsx")
+      .then(response => {
+        if (!response.ok) throw new Error(`Agent list request failed (${response.status}).`);
+        return response.arrayBuffer();
+      })
+      .then(buffer => {
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const values = workbook.SheetNames.flatMap(sheetName =>
+          XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false })
+            .flat()
+            .map(value => clean(value).toUpperCase())
+            .filter(Boolean)
+        );
+        setAgentOptions([...new Set(values)]);
+      })
+      .catch(error => setError(`Could not load the agent list: ${error.message}`));
   }, []);
 
   const processFile = file => {
@@ -446,7 +466,8 @@ function App() {
             <div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div>
             <div className="preview-inputs">
               <label className="company-field">Company / Deployment<input value={companyDeployment} onChange={event => setCompanyDeployment(event.target.value)} placeholder="Type company name" /></label>
-              <label className="company-field">Agent<input value={agent} onChange={event => setAgent(event.target.value)} placeholder="Type agent name" /></label>
+              <label className="company-field">Agent<input list="agent-options" value={agent} onChange={event => setAgent(event.target.value.toUpperCase())} placeholder="Type agent name" /></label>
+              <datalist id="agent-options">{agentOptions.map(option => <option key={option} value={option} />)}</datalist>
             </div>
             <div className="preview-tools"><button className="join-all-button" type="button" title="Move the complete middle name into the first name for every row" onClick={joinAllMiddleWithFirst}>All rows</button><label className="search-box">⌕<input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search payor names…" /></label></div>
           </div>

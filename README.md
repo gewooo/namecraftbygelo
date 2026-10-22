@@ -23,6 +23,8 @@ After upload, the Company / Deployment field can be used to fill that column for
 
 The Agent field similarly fills the `AGENT` column for every exported row when provided.
 
+Agent suggestions are loaded from `Files/LIST OF AGENTS.xlsx`; choices and typed Agent values are saved in uppercase.
+
 Each preview row includes `Middle → first` for moving that row's complete middle name into its first-name field.
 
 Each row also includes `1st middle → first` for moving only the first word of the middle name into the first-name field while keeping the remaining middle name.
