@@ -58,6 +58,10 @@ function preserveNameTokens(source, parts) {
   return missing;
 }
 
+function formatNameParts(last, first, middle, suffix) {
+  return [last, first].filter(Boolean).join(", ") + (middle ? ` ${middle}` : "") + (suffix ? ` ${suffix}` : "");
+}
+
 function membershipFeeValue(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : "";
   const text = clean(value);
@@ -179,7 +183,7 @@ function formatRow(row, headers, trainingData) {
     const missing = preserveNameTokens(source, [last, first, middle, suffix]);
     if (missing.length) middle = [middle, ...missing].filter(Boolean).join(" ");
   }
-  const formatted = [last, first].filter(Boolean).join(", ") + (middle ? ` ${middle}` : "") + (suffix ? ` ${suffix}` : "");
+  const formatted = formatNameParts(last, first, middle, suffix);
   return { source, first, middle, last, suffix, formatted };
 }
 
@@ -290,6 +294,7 @@ function App() {
   const [error, setError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const [companyDeployment, setCompanyDeployment] = useState("");
   const [agent, setAgent] = useState("");
   const [trainingData, setTrainingData] = useState([]);
@@ -320,12 +325,24 @@ function App() {
       return;
     }
     setFileName(file.name);
+    setPage(1);
     readWorkbook(file, trainingData, setResult, setError);
   };
 
   const visibleRows = result?.rows.filter(row =>
     [row.source, row.formatted, row.first, row.last].join(" ").toLowerCase().includes(query.toLowerCase())
   ) || [];
+  const pageSize = 50;
+  const pageCount = Math.max(1, Math.ceil(visibleRows.length / pageSize));
+  const pageRows = visibleRows.slice((page - 1) * pageSize, page * pageSize);
+  const updateRow = (id, field, value) => {
+    setResult(current => current ? {
+      ...current,
+      rows: current.rows.map(row => row.id === id
+        ? { ...row, [field]: value, formatted: formatNameParts(field === "last" ? value : row.last, field === "first" ? value : row.first, field === "middle" ? value : row.middle, field === "suffix" ? value : row.suffix) }
+        : row)
+    } : current);
+  };
 
   return (
     <main className="app-shell">
@@ -373,12 +390,12 @@ function App() {
             <div className="results-actions">
               <label className="company-field">Company / Deployment<input value={companyDeployment} onChange={event => setCompanyDeployment(event.target.value)} placeholder="Type company name" /></label>
               <label className="company-field">Agent<input value={agent} onChange={event => setAgent(event.target.value)} placeholder="Type agent name" /></label>
-              <div className="actions"><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment, agent)}>↓ Download .xlsx</button></div>
+              <div className="actions"><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment, agent)}>↓ Download .xlsx</button></div>
             </div>
           </div>
-          <div className="preview-toolbar"><div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div><label className="search-box">⌕<input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search payor names…" /></label></div>
-          <div className="table-wrap"><table><thead><tr><th>#</th><th>PAYOR NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>LAST NAME</th><th>SUFFIX</th><th>FORMATTED NAME</th></tr></thead><tbody>{visibleRows.slice(0, 100).map(row => <tr key={row.id}><td className="row-number">{String(row.id).padStart(2, "0")}</td><td className="muted">{row.source || "—"}</td><td>{row.first || "—"}</td><td>{row.middle || "—"}</td><td>{row.last || "—"}</td><td>{row.suffix || "—"}</td><td className="formatted">{row.formatted || "Needs review"}</td></tr>)}</tbody></table></div>
-          {visibleRows.length > 100 && <p className="table-note">Showing the first 100 matches. The download includes all {result.rows.length} names.</p>}
+          <div className="preview-toolbar"><div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div><label className="search-box">⌕<input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search payor names…" /></label></div>
+          <div className="table-wrap"><table><thead><tr><th>#</th><th>PAYOR NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>LAST NAME</th><th>SUFFIX</th><th>FORMATTED NAME</th></tr></thead><tbody>{pageRows.map(row => <tr key={row.id}><td className="row-number">{String(row.id).padStart(2, "0")}</td><td className="muted">{row.source || "—"}</td><td><input className="name-edit" value={row.first} onChange={event => updateRow(row.id, "first", event.target.value)} /></td><td><input className="name-edit" value={row.middle} onChange={event => updateRow(row.id, "middle", event.target.value)} /></td><td><input className="name-edit" value={row.last} onChange={event => updateRow(row.id, "last", event.target.value)} /></td><td><input className="name-edit suffix-edit" value={row.suffix} onChange={event => updateRow(row.id, "suffix", event.target.value)} /></td><td className="formatted">{row.formatted || "Needs review"}</td></tr>)}</tbody></table></div>
+          {visibleRows.length > 0 && <div className="pagination"><span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visibleRows.length)} of {visibleRows.length}</span><div><button className="pagination-button" disabled={page === 1} onClick={() => setPage(current => current - 1)}>Previous</button><strong>Page {page} of {pageCount}</strong><button className="pagination-button" disabled={page === pageCount} onClick={() => setPage(current => current + 1)}>Next</button></div></div>}
           {!visibleRows.length && <div className="empty-state">No names match “{query}”.</div>}
         </section>
       )}

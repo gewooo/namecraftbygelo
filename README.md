@@ -13,7 +13,7 @@ Run a local web server from this folder (for example, `npx serve .`) and open th
 - A single `Payor Name` column, including the format used by the supplied collection workbook
 - Separate `First Name`, `Middle Name`, and `Last Name` columns, including the `Member ...` and `Payor ...` headers used in the provided template
 
-Files are processed locally in the browser. The preview shows the first 100 matching rows, while the download contains every formatted row in the IMS template layout.
+Files are processed locally in the browser. The complete preview is editable and paginated at 50 rows per page, while the download contains every formatted row in the IMS template layout.
 
 `dataset.json` is used as a runtime reference dataset: exact Payor Name matches use its known first, middle, and last name fields; unseen names use the fallback parser.
 
