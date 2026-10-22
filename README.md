@@ -25,7 +25,7 @@ The Agent field similarly fills the `AGENT` column for every exported row when p
 
 Each preview row includes `Middle → first` for moving that row's complete middle name into its first-name field.
 
-Each row also includes `1st word → first` for moving only the first middle-name word into the first-name field while keeping the remaining middle name.
+Each row also includes `1st middle → first` for moving only the first word of the middle name into the first-name field while keeping the remaining middle name.
 
 The `All rows` action applies the complete-middle-name change to every row in the uploaded file.
 
