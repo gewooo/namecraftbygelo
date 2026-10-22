@@ -14,6 +14,13 @@ const mockupTrainingExamples = [
   ["DELA CRUZ, ANA JOY", "DELA CRUZ", "ANA JOY", ""]
 ];
 
+const assumedHeaders = [
+  "Company / Deployment", "Payor First Name", "Payor Middle Name", "Payor Last Name",
+  "Payor Suffix", "Member First Name", "Member Middle Name", "Member Last Name",
+  "Member Suffix", "Birth Date", "Sex", "Civil Status", "Contact Number",
+  "Relation To Payor", "Occupation", "Employee Number", "Email Address", "Premium", "AGENT"
+];
+
 const compoundPrefixes = ["de la", "dela", "de los", "delos", "del", "de", "san", "santa", "van", "von"];
 const suffixes = ["jr", "jr.", "sr", "sr.", "i", "ii", "iii", "iv", "v"];
 
@@ -196,9 +203,21 @@ function readWorkbook(file, trainingData, onComplete, onError) {
       const workbook = XLSX.read(event.target.result, { type: "array", cellDates: true });
       const sheetName = workbook.SheetNames.find(name => !/guide|read me/i.test(name)) || workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
+      const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false })
+        .filter(row => row.some(value => clean(value)));
+      if (!matrix.length) throw new Error("The selected sheet does not contain any data rows.");
+      const firstRow = matrix[0].map(clean);
+      const hasHeaders = Boolean(findColumn(firstRow, [
+        "Payor Name", "Payor First Name", "Member First Name", "Full Name",
+        "Company / Deployment", "Premium", "Membership Fee", "AGENT"
+      ]));
+      const headers = hasHeaders ? firstRow : assumedHeaders;
+      const dataRows = hasHeaders ? matrix.slice(1) : matrix;
+      const rows = dataRows.map(values => headers.reduce((row, header, index) => {
+        row[header] = values[index] ?? "";
+        return row;
+      }, {}));
       if (!rows.length) throw new Error("The selected sheet does not contain any data rows.");
-      const headers = Object.keys(rows[0]);
       const formatted = rows.map((row, index) => ({ id: index + 1, ...formatRow(row, headers, trainingData), raw: row }));
       onComplete({ file, sheetName, headers, rows: formatted, originalRows: formatted });
     } catch (error) {

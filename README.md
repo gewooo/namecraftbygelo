@@ -27,6 +27,8 @@ Agent suggestions are loaded from `Files/LIST OF AGENTS.xlsx`; choices and typed
 
 The editable preview also shows the membership fee as a number without a currency symbol.
 
+If the uploaded sheet has no header row, the app assumes the standard 19-column IMS Main Encoding order and preserves the first row as data.
+
 Each preview row includes `Middle → first` for moving that row's complete middle name into its first-name field.
 
 Each row also includes `1st middle → first` for moving only the first word of the middle name into the first-name field while keeping the remaining middle name.
