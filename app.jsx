@@ -442,7 +442,7 @@ function App() {
     <main className="app-shell">
       <nav className="topbar">
         <div className="brand"><span className="brand-mark">N</span><span>name<span className="brand-accent">craft</span></span></div>
-        <span className="topbar-note">Excel name formatter</span>
+        <span className="topbar-note">Namecraft by Gelo · Excel name formatter</span>
       </nav>
 
       <section className="hero">
