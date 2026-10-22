@@ -25,6 +25,8 @@ The Agent field similarly fills the `AGENT` column for every exported row when p
 
 Agent suggestions are loaded from `Files/LIST OF AGENTS.xlsx`; choices and typed Agent values are saved in uppercase.
 
+The editable preview also shows the membership fee as a number without a currency symbol.
+
 Each preview row includes `Middle → first` for moving that row's complete middle name into its first-name field.
 
 Each row also includes `1st middle → first` for moving only the first word of the middle name into the first-name field while keeping the remaining middle name.

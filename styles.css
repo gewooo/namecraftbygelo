@@ -5,3 +5,4 @@
 .join-button{display:block;padding:5px 7px;border:1px solid #b9daca;border-radius:5px;background:#f3fff9;color:#227755;font:600 10px "DM Sans";white-space:nowrap;cursor:pointer}.join-button:hover:not(:disabled){background:#e1f9ee}.join-button:disabled{opacity:.45;cursor:not-allowed}
 .join-first-word-button{margin-top:4px}
 .move-first-to-middle-button{margin-top:4px}
+.fee-value{white-space:nowrap;color:var(--ink);font-variant-numeric:tabular-nums}
