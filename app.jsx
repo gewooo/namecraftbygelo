@@ -362,7 +362,7 @@ function App() {
           {!visibleRows.length && <div className="empty-state">No names match “{query}”.</div>}
         </section>
       )}
-      <footer><span>NAMECRAFT</span><span className="creator-watermark">Built by Gelo Andrei Nerona</span><span>Local processing · Your file stays in your browser</span></footer>
+      <footer><span>NAMECRAFT</span><span className="creator-watermark">Local processing · Your file stays in your browser · Built by Gelo Andrei Nerona</span></footer>
     </main>
   );
 }
