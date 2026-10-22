@@ -441,7 +441,7 @@ function App() {
   return (
     <main className="app-shell">
       <nav className="topbar">
-        <div className="brand"><span className="brand-mark">N</span><span>Namecraft <span className="brand-accent">by Gelo</span></span></div>
+        <div className="brand"><span className="brand-mark">N</span><span>namecraft <span className="brand-accent">by gelo</span></span></div>
         <span className="topbar-note">Namecraft by Gelo · Excel name formatter</span>
       </nav>
 
