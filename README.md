@@ -23,6 +23,8 @@ After upload, the Company / Deployment field can be used to fill that column for
 
 The Agent field similarly fills the `AGENT` column for every exported row when provided.
 
+Each preview row includes a `Join to first` action for moving a middle name into the first-name field.
+
 Sex is not added automatically; existing `Sex` values are preserved and blank values remain blank.
 
 Full-name tokens are preserved in the formatted fields; middle names are not shortened to initials, and unmatched words are not discarded.

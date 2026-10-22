@@ -343,6 +343,16 @@ function App() {
         : row)
     } : current);
   };
+  const joinMiddleWithFirst = id => {
+    setResult(current => current ? {
+      ...current,
+      rows: current.rows.map(row => {
+        if (row.id !== id) return row;
+        const first = [row.first, row.middle].filter(Boolean).join(" ");
+        return { ...row, first, middle: "", formatted: formatNameParts(row.last, first, "", row.suffix) };
+      })
+    } : current);
+  };
 
   return (
     <main className="app-shell">
@@ -394,7 +404,7 @@ function App() {
             </div>
           </div>
           <div className="preview-toolbar"><div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div><label className="search-box">⌕<input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search payor names…" /></label></div>
-          <div className="table-wrap"><table><thead><tr><th>#</th><th>PAYOR NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>LAST NAME</th><th>SUFFIX</th><th>FORMATTED NAME</th></tr></thead><tbody>{pageRows.map(row => <tr key={row.id}><td className="row-number">{String(row.id).padStart(2, "0")}</td><td className="muted">{row.source || "—"}</td><td><input className="name-edit" value={row.first} onChange={event => updateRow(row.id, "first", event.target.value)} /></td><td><input className="name-edit" value={row.middle} onChange={event => updateRow(row.id, "middle", event.target.value)} /></td><td><input className="name-edit" value={row.last} onChange={event => updateRow(row.id, "last", event.target.value)} /></td><td><input className="name-edit suffix-edit" value={row.suffix} onChange={event => updateRow(row.id, "suffix", event.target.value)} /></td><td className="formatted">{row.formatted || "Needs review"}</td></tr>)}</tbody></table></div>
+          <div className="table-wrap"><table><thead><tr><th>#</th><th>PAYOR NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>LAST NAME</th><th>SUFFIX</th><th>FORMATTED NAME</th><th>ACTION</th></tr></thead><tbody>{pageRows.map(row => <tr key={row.id}><td className="row-number">{String(row.id).padStart(2, "0")}</td><td className="muted">{row.source || "—"}</td><td><input className="name-edit" value={row.first} onChange={event => updateRow(row.id, "first", event.target.value)} /></td><td><input className="name-edit" value={row.middle} onChange={event => updateRow(row.id, "middle", event.target.value)} /></td><td><input className="name-edit" value={row.last} onChange={event => updateRow(row.id, "last", event.target.value)} /></td><td><input className="name-edit suffix-edit" value={row.suffix} onChange={event => updateRow(row.id, "suffix", event.target.value)} /></td><td className="formatted">{row.formatted || "Needs review"}</td><td><button className="join-button" type="button" disabled={!row.middle} onClick={() => joinMiddleWithFirst(row.id)}>Join to first</button></td></tr>)}</tbody></table></div>
           {visibleRows.length > 0 && <div className="pagination"><span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visibleRows.length)} of {visibleRows.length}</span><div><button className="pagination-button" disabled={page === 1} onClick={() => setPage(current => current - 1)}>Previous</button><strong>Page {page} of {pageCount}</strong><button className="pagination-button" disabled={page === pageCount} onClick={() => setPage(current => current + 1)}>Next</button></div></div>}
           {!visibleRows.length && <div className="empty-state">No names match “{query}”.</div>}
         </section>
