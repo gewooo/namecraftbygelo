@@ -184,7 +184,7 @@ function downloadFileName(originalFileName) {
   return `${cleanedBaseName || "formatted-names"}.xlsx`;
 }
 
-function downloadWorkbook(rows, originalFileName, companyDeployment) {
+function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
   const output = rows.map(row => {
     const source = row.raw || {};
     const value = (...names) => {
@@ -210,7 +210,7 @@ function downloadWorkbook(rows, originalFileName, companyDeployment) {
       "Employee Number": value("Employee Number", "Employee No."),
       "Email Address": value("Email Address", "Email"),
       "Premium": membershipFeeValue(value("Premium", "Membership Fee", "Membership Fee (₱)")),
-      "AGENT": value("AGENT", "Agent"),
+      "AGENT": clean(agent) || value("AGENT", "Agent"),
     };
   });
   const sheet = XLSX.utils.json_to_sheet(output);
@@ -262,6 +262,7 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [query, setQuery] = useState("");
   const [companyDeployment, setCompanyDeployment] = useState("");
+  const [agent, setAgent] = useState("");
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
 
@@ -342,7 +343,8 @@ function App() {
             <div><div className="eyebrow"><span className="status-dot"></span> PREVIEW READY</div><h2>{result.rows.length} names formatted</h2><p className="file-meta">◫ {fileName} <span>·</span> Sheet: {result.sheetName}</p></div>
             <div className="results-actions">
               <label className="company-field">Company / Deployment<input value={companyDeployment} onChange={event => setCompanyDeployment(event.target.value)} placeholder="Type company name" /></label>
-              <div className="actions"><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setCompanyDeployment(""); }}>Upload another</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment)}>↓ Download .xlsx</button></div>
+              <label className="company-field">Agent<input value={agent} onChange={event => setAgent(event.target.value)} placeholder="Type agent name" /></label>
+              <div className="actions"><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment, agent)}>↓ Download .xlsx</button></div>
             </div>
           </div>
           <div className="preview-toolbar"><div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div><label className="search-box">⌕<input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search payor names…" /></label></div>

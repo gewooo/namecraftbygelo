@@ -21,6 +21,8 @@ The workbook in `Files/2026 Listing Format.xlsx` is kept as a reference template
 
 After upload, the Company / Deployment field can be used to fill that column for every exported row.
 
+The Agent field similarly fills the `AGENT` column for every exported row when provided.
+
 Sex is not added automatically; existing `Sex` values are preserved and blank values remain blank.
 
 The exported workbook uses a blue styled header, Aptos fonts, alternating row fills, borders, column widths, and an Excel autofilter over the `Main Encoding` table.
