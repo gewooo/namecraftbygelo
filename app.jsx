@@ -202,7 +202,7 @@ function downloadWorkbook(rows, originalFileName, companyDeployment) {
       "Member Last Name": value("Member Last Name"),
       "Member Suffix": value("Member Suffix"),
       "Birth Date": value("Birth Date", "Birthday", "Date of Birth"),
-      "Sex": value("Sex") || "F",
+      "Sex": value("Sex"),
       "Civil Status": value("Civil Status"),
       "Contact Number": value("Contact Number", "Contact", "Phone", "Mobile"),
       "Relation To Payor": value("Relation To Payor", "Relationship"),
