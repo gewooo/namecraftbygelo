@@ -375,6 +375,20 @@ function App() {
       })
     } : current);
   };
+  const moveLastFirstWordToMiddle = id => {
+    setResult(current => current ? {
+      ...current,
+      rows: current.rows.map(row => {
+        if (row.id !== id || !row.first) return row;
+        const firstWords = clean(row.first).split(" ");
+        if (firstWords.length < 2) return row;
+        const lastFirstWord = firstWords.pop();
+        const first = firstWords.join(" ");
+        const middle = [lastFirstWord, row.middle].filter(Boolean).join(" ");
+        return { ...row, first, middle, formatted: formatNameParts(row.last, first, middle, row.suffix) };
+      })
+    } : current);
+  };
   const resetFile = () => {
     setResult(current => current ? { ...current, rows: current.originalRows } : current);
     setCompanyDeployment("");
@@ -436,7 +450,7 @@ function App() {
             </div>
             <div className="preview-tools"><button className="join-all-button" type="button" title="Move the complete middle name into the first name for every row" onClick={joinAllMiddleWithFirst}>All rows</button><label className="search-box">⌕<input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search payor names…" /></label></div>
           </div>
-          <div className="table-wrap"><table><thead><tr><th>#</th><th>PAYOR NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>LAST NAME</th><th>SUFFIX</th><th>FORMATTED NAME</th><th>ACTION</th></tr></thead><tbody>{pageRows.map(row => <tr key={row.id}><td className="row-number">{String(row.id).padStart(2, "0")}</td><td className="muted">{row.source || "—"}</td><td><input className="name-edit" value={row.first} onChange={event => updateRow(row.id, "first", event.target.value)} /></td><td><input className="name-edit" value={row.middle} onChange={event => updateRow(row.id, "middle", event.target.value)} /></td><td><input className="name-edit" value={row.last} onChange={event => updateRow(row.id, "last", event.target.value)} /></td><td><input className="name-edit suffix-edit" value={row.suffix} onChange={event => updateRow(row.id, "suffix", event.target.value)} /></td><td className="formatted">{row.formatted || "Needs review"}</td><td><button className="join-button" type="button" title="Move the complete middle name into the first name for this row" disabled={!row.middle} onClick={event => { event.stopPropagation(); joinMiddleWithFirst(row.id); }}>Move entire middle to first</button><button className="join-button join-first-word-button" type="button" title="Move only the first word of the middle name into the first name for this row" disabled={!row.middle} onClick={event => { event.stopPropagation(); joinFirstMiddleWordWithFirst(row.id); }}>Move first middle word to first</button></td></tr>)}</tbody></table></div>
+          <div className="table-wrap"><table><thead><tr><th>#</th><th>PAYOR NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>LAST NAME</th><th>SUFFIX</th><th>FORMATTED NAME</th><th>ACTION</th></tr></thead><tbody>{pageRows.map(row => <tr key={row.id}><td className="row-number">{String(row.id).padStart(2, "0")}</td><td className="muted">{row.source || "—"}</td><td><input className="name-edit" value={row.first} onChange={event => updateRow(row.id, "first", event.target.value)} /></td><td><input className="name-edit" value={row.middle} onChange={event => updateRow(row.id, "middle", event.target.value)} /></td><td><input className="name-edit" value={row.last} onChange={event => updateRow(row.id, "last", event.target.value)} /></td><td><input className="name-edit suffix-edit" value={row.suffix} onChange={event => updateRow(row.id, "suffix", event.target.value)} /></td><td className="formatted">{row.formatted || "Needs review"}</td><td><button className="join-button" type="button" title="Move the complete middle name into the first name for this row" disabled={!row.middle} onClick={event => { event.stopPropagation(); joinMiddleWithFirst(row.id); }}>Move entire middle to first</button><button className="join-button join-first-word-button" type="button" title="Move only the first word of the middle name into the first name for this row" disabled={!row.middle} onClick={event => { event.stopPropagation(); joinFirstMiddleWordWithFirst(row.id); }}>Move first middle word to first</button><button className="join-button move-first-to-middle-button" type="button" title="Move the last word of the first name into the beginning of the middle name for this row" disabled={!row.first || !row.first.includes(" ")} onClick={event => { event.stopPropagation(); moveLastFirstWordToMiddle(row.id); }}>Move last first word to middle</button></td></tr>)}</tbody></table></div>
           {visibleRows.length > 0 && <div className="pagination"><span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visibleRows.length)} of {visibleRows.length}</span><div><button className="pagination-button" disabled={page === 1} onClick={() => setPage(current => current - 1)}>Previous</button><strong>Page {page} of {pageCount}</strong><button className="pagination-button" disabled={page === pageCount} onClick={() => setPage(current => current + 1)}>Next</button></div></div>}
           {!visibleRows.length && <div className="empty-state">No names match “{query}”.</div>}
         </section>
