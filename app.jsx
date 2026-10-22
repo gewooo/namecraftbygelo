@@ -184,7 +184,7 @@ function downloadFileName(originalFileName) {
   return `${cleanedBaseName || "formatted-names"}.xlsx`;
 }
 
-function downloadWorkbook(rows, originalFileName) {
+function downloadWorkbook(rows, originalFileName, companyDeployment) {
   const output = rows.map(row => {
     const source = row.raw || {};
     const value = (...names) => {
@@ -192,7 +192,7 @@ function downloadWorkbook(rows, originalFileName) {
       return column ? source[column] : "";
     };
     return {
-      "Company / Deployment": value("Company / Deployment", "Company", "Deployment"),
+      "Company / Deployment": clean(companyDeployment) || value("Company / Deployment", "Company", "Deployment"),
       "Payor First Name": row.first,
       "Payor Middle Name": row.middle,
       "Payor Last Name": row.last,
@@ -261,6 +261,7 @@ function App() {
   const [error, setError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [query, setQuery] = useState("");
+  const [companyDeployment, setCompanyDeployment] = useState("");
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
 
@@ -339,7 +340,10 @@ function App() {
         <section className="results-section">
           <div className="results-heading">
             <div><div className="eyebrow"><span className="status-dot"></span> PREVIEW READY</div><h2>{result.rows.length} names formatted</h2><p className="file-meta">◫ {fileName} <span>·</span> Sheet: {result.sheetName}</p></div>
-            <div className="actions"><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); }}>Upload another</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName)}>↓ Download .xlsx</button></div>
+            <div className="results-actions">
+              <label className="company-field">Company / Deployment<input value={companyDeployment} onChange={event => setCompanyDeployment(event.target.value)} placeholder="Type company name" /></label>
+              <div className="actions"><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setCompanyDeployment(""); }}>Upload another</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment)}>↓ Download .xlsx</button></div>
+            </div>
           </div>
           <div className="preview-toolbar"><div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div><label className="search-box">⌕<input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search payor names…" /></label></div>
           <div className="table-wrap"><table><thead><tr><th>#</th><th>PAYOR NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>LAST NAME</th><th>SUFFIX</th><th>FORMATTED NAME</th></tr></thead><tbody>{visibleRows.slice(0, 100).map(row => <tr key={row.id}><td className="row-number">{String(row.id).padStart(2, "0")}</td><td className="muted">{row.source || "—"}</td><td>{row.first || "—"}</td><td>{row.middle || "—"}</td><td>{row.last || "—"}</td><td>{row.suffix || "—"}</td><td className="formatted">{row.formatted || "Needs review"}</td></tr>)}</tbody></table></div>

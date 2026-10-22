@@ -19,4 +19,6 @@ Files are processed locally in the browser. The preview shows the first 100 matc
 
 The workbook in `Files/2026 Listing Format.xlsx` is kept as a reference template and is not loaded automatically. Choose a workbook to begin processing without modifying the source file. Membership fees exported to `Premium` are numeric values without currency symbols.
 
+After upload, the Company / Deployment field can be used to fill that column for every exported row.
+
 The exported workbook uses a blue styled header, Aptos fonts, alternating row fills, borders, column widths, and an Excel autofilter over the `Main Encoding` table.
