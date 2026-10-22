@@ -23,7 +23,7 @@ After upload, the Company / Deployment field can be used to fill that column for
 
 The Agent field similarly fills the `AGENT` column for every exported row when provided.
 
-Each preview row includes a `Join to first` action for moving a middle name into the first-name field.
+Each preview row includes a `Join row` action for moving that row's complete middle name into its first-name field.
 
 Each row also includes `Join first word` for moving only the first middle-name word into the first-name field while keeping the remaining middle name.
 
