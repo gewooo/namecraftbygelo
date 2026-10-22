@@ -198,7 +198,7 @@ function readWorkbook(file, trainingData, onComplete, onError) {
       if (!rows.length) throw new Error("The selected sheet does not contain any data rows.");
       const headers = Object.keys(rows[0]);
       const formatted = rows.map((row, index) => ({ id: index + 1, ...formatRow(row, headers, trainingData), raw: row }));
-      onComplete({ file, sheetName, headers, rows: formatted });
+      onComplete({ file, sheetName, headers, rows: formatted, originalRows: formatted });
     } catch (error) {
       onError(error.message || "Unable to read this workbook.");
     }
@@ -375,6 +375,13 @@ function App() {
       })
     } : current);
   };
+  const resetFile = () => {
+    setResult(current => current ? { ...current, rows: current.originalRows } : current);
+    setCompanyDeployment("");
+    setAgent("");
+    setQuery("");
+    setPage(1);
+  };
 
   return (
     <main className="app-shell">
@@ -419,7 +426,7 @@ function App() {
         <section className="results-section">
           <div className="results-heading">
             <div><div className="eyebrow"><span className="status-dot"></span> PREVIEW READY</div><h2>{result.rows.length} names formatted</h2><p className="file-meta">◫ {fileName} <span>·</span> Sheet: {result.sheetName}</p></div>
-            <div className="actions"><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment, agent)}>↓ Download .xlsx</button></div>
+            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment, agent)}>↓ Download .xlsx</button></div>
           </div>
           <div className="preview-toolbar">
             <div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div>

@@ -29,6 +29,8 @@ Each row also includes `Join first word` for moving only the first middle-name w
 
 The `Join all` action applies that change to every row in the uploaded file.
 
+Use `Reset file` to discard all row edits and clear the Company / Deployment and Agent values.
+
 Sex is not added automatically; existing `Sex` values are preserved and blank values remain blank.
 
 Full-name tokens are preserved in the formatted fields; middle names are not shortened to initials, and unmatched words are not discarded.
