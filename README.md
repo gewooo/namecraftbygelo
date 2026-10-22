@@ -23,11 +23,11 @@ After upload, the Company / Deployment field can be used to fill that column for
 
 The Agent field similarly fills the `AGENT` column for every exported row when provided.
 
-Each preview row includes `Join entire middle to first` for moving that row's complete middle name into its first-name field.
+Each preview row includes `Middle → first` for moving that row's complete middle name into its first-name field.
 
-Each row also includes `Join first middle word to first` for moving only the first middle-name word into the first-name field while keeping the remaining middle name.
+Each row also includes `1st word → first` for moving only the first middle-name word into the first-name field while keeping the remaining middle name.
 
-The `Join middle to first (all rows)` action applies the complete-middle-name change to every row in the uploaded file.
+The `All rows` action applies the complete-middle-name change to every row in the uploaded file.
 
 Use `Reset file` to discard all row edits and clear the Company / Deployment and Agent values.
 
