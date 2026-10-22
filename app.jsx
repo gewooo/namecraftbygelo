@@ -8,6 +8,8 @@ const defaultTrainingExamples = [
   ["de Castro Jr., Jhoanna Marie E.", "de Castro Jr.", "Jhoanna Marie", "E."]
 ];
 
+const mockupTrainingExample = ["NERONA, GELO ANDREI", "NERONA", "GELO ANDREI", ""];
+
 const compoundPrefixes = ["de la", "dela", "de los", "delos", "del", "de", "san", "santa", "van", "von"];
 const suffixes = ["jr", "jr.", "sr", "sr.", "i", "ii", "iii", "iv", "v"];
 
@@ -324,7 +326,7 @@ function App() {
           <div className="section-label">HOW IT FORMATS</div>
           <div className="training-card">
             <div className="training-copy"><h2>Reference dataset loaded.</h2><p>Namecraft checks dataset.json first for known Payor Name patterns, then uses the parser for names not found in the dataset.</p></div>
-            <div className="example-list">{(trainingData.length ? trainingData.slice(0, 3).map(item => [item.payor_name, item.last_name, item.first_name, item.middle_name]) : defaultTrainingExamples.slice(0, 3)).map(example => <div className="example-row" key={example[0]}><span>{example[0]}</span><b>→</b><strong>{example[1]}, {example[2]} {example[3]}</strong></div>)}</div>
+            <div className="example-list">{(trainingData.length ? [...trainingData.slice(0, 3).map(item => [item.payor_name, item.last_name, item.first_name, item.middle_name]), mockupTrainingExample] : defaultTrainingExamples.slice(0, 3)).map(example => <div className="example-row" key={example[0]}><span>{example[0]}</span><b>→</b><strong>{[example[1], example[2], example[3]].filter(Boolean).join(" ")}</strong></div>)}</div>
           </div>
         </section>
       )}
