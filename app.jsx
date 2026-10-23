@@ -231,7 +231,36 @@ function downloadFileName(originalFileName) {
   const extensionIndex = originalFileName.lastIndexOf(".");
   const baseName = extensionIndex > 0 ? originalFileName.slice(0, extensionIndex) : originalFileName;
   const cleanedBaseName = baseName.split("-")[0].replace(/\b\d+\b/g, "").replace(/\s+/g, " ").trim();
-  return `${cleanedBaseName || "formatted-names"}.xlsx`;
+  return `${cleanedBaseName || "formatted-names"} - formatted.xlsx`;
+}
+
+function templateFileName(originalFileName) {
+  const fallback = "listing-form.xlsx";
+  if (!originalFileName) return fallback;
+
+  const extensionIndex = originalFileName.lastIndexOf(".");
+  const baseName = extensionIndex > 0 ? originalFileName.slice(0, extensionIndex) : originalFileName;
+  const cleanedBaseName = baseName
+    .replace(/\bNEW\b/gi, "")
+    .replace(/\b\d+\b/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*[-_]\s*$/, "")
+    .trim();
+  return `${cleanedBaseName || "listing-form"}.xlsx`;
+}
+
+async function downloadTemplate(originalFileName) {
+  const response = await fetch("./Files/2026 Listing Format.xlsx");
+  if (!response.ok) throw new Error(`Template request failed (${response.status}).`);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = templateFileName(originalFileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
@@ -479,7 +508,14 @@ function App() {
   };
   const downloadSelected = () => {
     const selected = result?.rows.filter(row => selectedRows.includes(row.id)) || [];
-    if (selected.length) downloadWorkbook(selected, fileName, companyDeployment, agent);
+    if (selected.length) {
+      downloadWorkbook(selected, fileName, companyDeployment, agent);
+      downloadTemplate(fileName).catch(downloadError => setError(`Could not download the listing template: ${downloadError.message}`));
+    }
+  };
+  const downloadFiles = () => {
+    downloadWorkbook(result.rows, fileName, companyDeployment, agent);
+    downloadTemplate(fileName).catch(downloadError => setError(`Could not download the listing template: ${downloadError.message}`));
   };
 
   return (
@@ -525,7 +561,7 @@ function App() {
         <section className="results-section">
           <div className="results-heading">
             <div><div className="eyebrow"><span className="status-dot"></span> PREVIEW READY</div><h2>{result.rows.length} names formatted</h2><p className="file-meta">◫ {fileName} <span>·</span> Sheet: {result.sheetName}</p></div>
-            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment, agent)}>↓ All .xlsx</button></div>
+            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="download-button" onClick={downloadFiles}>↓ All .xlsx</button></div>
           </div>
           <div className="preview-toolbar">
             <div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div>

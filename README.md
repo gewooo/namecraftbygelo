@@ -50,3 +50,5 @@ Full-name tokens are preserved in the formatted fields; middle names are not sho
 Member Name fields are copied from the separated Payor Name fields in uppercase; no `PROPER` formula is added.
 
 The exported workbook uses a blue styled header, Aptos fonts, alternating row fills, borders, column widths, and an Excel autofilter over the `Main Encoding` table.
+
+Each download produces two files: the formatted workbook and an unchanged copy of `Files/2026 Listing Format.xlsx`. The formatted workbook is named with a `- formatted` suffix. The template copy uses the uploaded filename as its company name with `NEW` removed.
