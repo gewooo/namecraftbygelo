@@ -540,7 +540,7 @@ function App() {
           {!visibleRows.length && <div className="empty-state">No names match “{query}”.</div>}
         </section>
       )}
-      <footer><span>NAMECRAFT</span><span className="privacy-note">Local processing · Your file stays in your browser · <b className="creator-watermark">Built by Gelo Andrei Nerona</b></span></footer>
+      <footer><span>NAMECRAFT</span><span className="privacy-note">Local processing · Your file stays in your browser · <b className="creator-watermark">Built by Gelo Andrei Nerona</b> <img className="footer-easter-egg" src="./Files/Giggling%20Platypus.png" alt="Giggling Platypus" /></span></footer>
     </main>
   );
 }
