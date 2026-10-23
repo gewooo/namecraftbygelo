@@ -31,13 +31,13 @@ The editable preview also shows the membership fee as a number without a currenc
 
 If the uploaded sheet has no header row, the app assumes the standard 19-column IMS Main Encoding order and preserves the first row as data.
 
-Each preview row includes `Middle → first` for moving that row's complete middle name into its first-name field.
+Each preview row includes `JOIN` for moving that row's complete middle name into its first-name field.
 
-Each row also includes `1st middle → first` for moving only the first word of the middle name into the first-name field while keeping the remaining middle name.
+Each row also includes `1ST` for moving only the first word of the middle name into the first-name field while keeping the remaining middle name.
 
-Each row also includes `Move last first word to middle` for changing `KRISTINE DE` + `GUZMAN` into `KRISTINE` + `DE GUZMAN`.
+Each row also includes `↔` for changing `KRISTINE DE` + `GUZMAN` into `KRISTINE` + `DE GUZMAN`.
 
-The `All rows` action applies the complete-middle-name change to every row in the uploaded file.
+The `ALL` action applies the complete-middle-name change to every row in the uploaded file.
 
 Use `Reset file` to discard all row edits and clear the Company / Deployment and Agent values.
 
