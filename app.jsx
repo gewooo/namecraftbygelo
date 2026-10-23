@@ -451,6 +451,7 @@ function App() {
   const [pendingBirthdayWorkbook, setPendingBirthdayWorkbook] = useState(null);
   const [birthdaySheetNames, setBirthdaySheetNames] = useState([]);
   const [birthdaySheetName, setBirthdaySheetName] = useState("");
+  const [birthdayMatchCount, setBirthdayMatchCount] = useState(0);
   const [companyDeployment, setCompanyDeployment] = useState("");
   const [agent, setAgent] = useState("");
   const [agentOptions, setAgentOptions] = useState([]);
@@ -512,6 +513,7 @@ function App() {
     setSelectedRows([]);
     setPendingBirthdayWorkbook(null);
     setBirthdayFileName("");
+    setBirthdayMatchCount(0);
     setBirthdaySheetNames([]);
     setBirthdaySheetName("");
     readWorkbook(file, trainingData, setResult, setError);
@@ -541,14 +543,17 @@ function App() {
   const confirmBirthdayFile = () => {
     if (!pendingBirthdayWorkbook) return;
     const birthdays = new Map(pendingBirthdayWorkbook.records.map(record => [record.key, record.birthDate]));
+    const matchedCount = result?.rows.filter(row => birthdays.has(nameKey(row.originalName))).length || 0;
     setResult(current => {
       if (!current) return current;
       const rows = current.rows.map(row => {
         const match = birthdays.get(nameKey(row.originalName));
-        return match ? { ...row, birthDate: match } : row;
+        if (!match) return row;
+        return { ...row, birthDate: match };
       });
       return { ...current, rows, originalRows: rows };
     });
+    setBirthdayMatchCount(matchedCount);
     setBirthdayFileName(pendingBirthdayWorkbook.fileName);
     setPendingBirthdayWorkbook(null);
   };
@@ -634,6 +639,7 @@ function App() {
     setPage(1);
     setSelectedRows([]);
     setBirthdayFileName("");
+    setBirthdayMatchCount(0);
     setPendingBirthdayWorkbook(null);
     setBirthdaySheetNames([]);
     setBirthdaySheetName("");
@@ -706,6 +712,7 @@ function App() {
           <div className="results-heading">
             <div><div className="eyebrow"><span className="status-dot"></span> PREVIEW READY</div><h2>{result.rows.length} names formatted</h2><p className="file-meta">◫ {fileName} <span>·</span> Sheet: {result.sheetName}</p></div>
             <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); setBirthdayFileName(""); setPendingBirthdayWorkbook(null); setBirthdaySheetNames([]); setBirthdaySheetName(""); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="formatted-button" onClick={downloadFormatted}>↓ Formatted</button><button className="download-button" onClick={downloadFiles}>↓ All .xlsx</button></div>
+            setBirthdayMatchCount(0); setPendingBirthdayWorkbook(null); setBirthdaySheetNames([]); setBirthdaySheetName(""); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="formatted-button" onClick={downloadFormatted}>↓ Formatted</button><button className="download-button" onClick={downloadFiles}>↓ All .xlsx</button></div>
           </div>
           <div className="preview-toolbar">
             <div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div>
@@ -716,7 +723,7 @@ function App() {
               {birthdaySheetNames.length > 0 && <label className="company-field birthday-sheet">Sheet<select value={birthdaySheetName} onChange={event => setBirthdaySheetName(event.target.value)}>{birthdaySheetNames.map(sheetName => <option key={sheetName} value={sheetName}>{sheetName}</option>)}</select><button className="secondary-button" type="button" onClick={inspectBirthdaySheet}>Review sheet</button></label>}
               <datalist id="agent-options">{agentOptions.map(option => <option key={option} value={option} />)}</datalist>
             </div>
-            {birthdayFileName && <div className="birthday-status">Birthday matches loaded from {birthdayFileName}</div>}
+            {birthdayFileName && <div className="birthday-status">Matched {birthdayMatchCount} preview row{birthdayMatchCount === 1 ? "" : "s"} from {birthdayFileName}. Review the BIRTHDAY column below.</div>}
             {pendingBirthdayWorkbook && <div className="birthday-confirmation">
               <strong>Confirm birthday workbook</strong>
               <span>File: {pendingBirthdayWorkbook.fileName}</span>
