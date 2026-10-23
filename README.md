@@ -29,8 +29,6 @@ Each preview row has a Birthday date input. Entered birthdays are exported for t
 
 Agent suggestions are loaded from `Files/LIST OF AGENTS.xlsx`; choices and typed Agent values are saved in uppercase.
 
-When an Agent is entered with a Company / Deployment, the company-agent pair is saved locally in the browser. Future entries for the same company show the remembered Agent in the suggestions without creating duplicates.
-
 The editable preview also shows the membership fee as a number without a currency symbol.
 
 If the uploaded sheet has no header row, the app assumes the standard 19-column IMS Main Encoding order and preserves the first row as data.

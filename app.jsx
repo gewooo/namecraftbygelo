@@ -377,16 +377,6 @@ function App() {
   const [companyDeployment, setCompanyDeployment] = useState("");
   const [agent, setAgent] = useState("");
   const [agentOptions, setAgentOptions] = useState([]);
-  const [companyAgents, setCompanyAgents] = useState(() => {
-    const saved = localStorage.getItem("namecraft-company-agents");
-    if (!saved) return {};
-    try {
-      const parsed = JSON.parse(saved);
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch {
-      return {};
-    }
-  });
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("namecraft-dark-mode") === "true");
@@ -413,20 +403,6 @@ function App() {
         setError(`Could not load dataset.json: ${error.message}`);
       });
   }, []);
-
-  const companyKey = companyDeployment.trim().toUpperCase();
-  const rememberedAgents = companyAgents[companyKey] || [];
-  const availableAgentOptions = [...new Set([...rememberedAgents, ...agentOptions])];
-  const rememberAgentForCompany = () => {
-    const savedAgent = clean(agent).toUpperCase();
-    if (!companyKey || !savedAgent || rememberedAgents.includes(savedAgent)) return;
-    const nextCompanyAgents = {
-      ...companyAgents,
-      [companyKey]: [...rememberedAgents, savedAgent]
-    };
-    setCompanyAgents(nextCompanyAgents);
-    localStorage.setItem("namecraft-company-agents", JSON.stringify(nextCompanyAgents));
-  };
 
   useEffect(() => {
     fetch("./Files/LIST OF AGENTS.xlsx")
@@ -611,8 +587,8 @@ function App() {
             <div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div>
             <div className="preview-inputs">
               <label className="company-field">Company / Deployment<input value={companyDeployment} onChange={event => setCompanyDeployment(event.target.value)} placeholder="Type company name" /></label>
-              <label className="company-field">Agent<input list="agent-options" value={agent} onChange={event => setAgent(event.target.value.toUpperCase())} onBlur={rememberAgentForCompany} placeholder="Type agent name" /></label>
-              <datalist id="agent-options">{availableAgentOptions.map(option => <option key={option} value={option} />)}</datalist>
+              <label className="company-field">Agent<input list="agent-options" value={agent} onChange={event => setAgent(event.target.value.toUpperCase())} placeholder="Type agent name" /></label>
+              <datalist id="agent-options">{agentOptions.map(option => <option key={option} value={option} />)}</datalist>
             </div>
             <div className="preview-tools"><button className="join-all-button" type="button" title="Move the complete middle name into the first name for every row" onClick={joinAllMiddleWithFirst}>ALL</button><button className="join-all-button" type="button" title="Download only selected rows" disabled={!selectedRows.length} onClick={downloadSelected}>↓ {selectedRows.length}</button><label className="search-box">⌕<input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search payor names…" /></label></div>
           </div>
