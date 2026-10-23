@@ -266,7 +266,7 @@ async function downloadTemplate(originalFileName) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
+function downloadWorkbook(rows, originalFileName, companyDeployment, agent, birthDate) {
   const output = rows.map(row => {
     const source = row.raw || {};
     const value = (...names) => {
@@ -283,7 +283,7 @@ function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
       "Member Middle Name": "",
       "Member Last Name": "",
       "Member Suffix": "",
-      "Birth Date": value("Birth Date", "Birthday", "Date of Birth"),
+      "Birth Date": clean(birthDate) || value("Birth Date", "Birthday", "Date of Birth"),
       "Sex": value("Sex"),
       "Civil Status": value("Civil Status"),
       "Contact Number": value("Contact Number", "Contact", "Phone", "Mobile"),
@@ -362,6 +362,7 @@ function App() {
   const [selectedRows, setSelectedRows] = useState([]);
   const [companyDeployment, setCompanyDeployment] = useState("");
   const [agent, setAgent] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [agentOptions, setAgentOptions] = useState([]);
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
@@ -496,6 +497,7 @@ function App() {
     setResult(current => current ? { ...current, rows: current.originalRows } : current);
     setCompanyDeployment("");
     setAgent("");
+    setBirthDate("");
     setQuery("");
     setPage(1);
     setSelectedRows([]);
@@ -512,12 +514,12 @@ function App() {
   const downloadSelected = () => {
     const selected = result?.rows.filter(row => selectedRows.includes(row.id)) || [];
     if (selected.length) {
-      downloadWorkbook(selected, fileName, companyDeployment, agent);
+      downloadWorkbook(selected, fileName, companyDeployment, agent, birthDate);
       downloadTemplate(fileName).catch(downloadError => setError(`Could not download the listing template: ${downloadError.message}`));
     }
   };
   const downloadFiles = () => {
-    downloadWorkbook(result.rows, fileName, companyDeployment, agent);
+    downloadWorkbook(result.rows, fileName, companyDeployment, agent, birthDate);
     downloadTemplate(fileName).catch(downloadError => setError(`Could not download the listing template: ${downloadError.message}`));
   };
 
@@ -564,13 +566,14 @@ function App() {
         <section className="results-section">
           <div className="results-heading">
             <div><div className="eyebrow"><span className="status-dot"></span> PREVIEW READY</div><h2>{result.rows.length} names formatted</h2><p className="file-meta">◫ {fileName} <span>·</span> Sheet: {result.sheetName}</p></div>
-            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="download-button" onClick={downloadFiles}>↓ All .xlsx</button></div>
+            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); setBirthDate(""); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="download-button" onClick={downloadFiles}>↓ All .xlsx</button></div>
           </div>
           <div className="preview-toolbar">
             <div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div>
             <div className="preview-inputs">
               <label className="company-field">Company / Deployment<input value={companyDeployment} onChange={event => setCompanyDeployment(event.target.value)} placeholder="Type company name" /></label>
               <label className="company-field">Agent<input list="agent-options" value={agent} onChange={event => setAgent(event.target.value.toUpperCase())} placeholder="Type agent name" /></label>
+              <label className="company-field">Birthday<input type="date" value={birthDate} onChange={event => setBirthDate(event.target.value)} /></label>
               <datalist id="agent-options">{agentOptions.map(option => <option key={option} value={option} />)}</datalist>
             </div>
             <div className="preview-tools"><button className="join-all-button" type="button" title="Move the complete middle name into the first name for every row" onClick={joinAllMiddleWithFirst}>ALL</button><button className="join-all-button" type="button" title="Download only selected rows" disabled={!selectedRows.length} onClick={downloadSelected}>↓ {selectedRows.length}</button><label className="search-box">⌕<input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search payor names…" /></label></div>
