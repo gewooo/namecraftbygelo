@@ -27,6 +27,8 @@ The Agent field similarly fills the `AGENT` column for every exported row when p
 
 Each preview row has a Birthday date input. Entered birthdays are exported for their individual rows in `YYYY-MM-DD` format; existing birthday values are preserved and normalized to the same format when left unchanged.
 
+Use the Birthday file input to upload a separate workbook containing a name column (or first, middle, and last name columns) and a `Birth Date`, `Birthday`, `Date of Birth`, or `DOB` column. Exact normalized name matches fill the corresponding preview rows, and unmatched rows remain available for manual entry.
+
 Agent suggestions are loaded from `Files/LIST OF AGENTS.xlsx`; choices and typed Agent values are saved in uppercase.
 
 The editable preview also shows the membership fee as a number without a currency symbol.
