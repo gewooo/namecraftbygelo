@@ -25,7 +25,7 @@ After upload, the Company / Deployment field can be used to fill that column for
 
 The Agent field similarly fills the `AGENT` column for every exported row when provided.
 
-The Birthday field fills the `Birth Date` column for every exported row when provided; otherwise, existing birthday values are preserved.
+Each preview row has a Birthday date input. Entered birthdays are exported for their individual rows; existing birthday values are preserved when left unchanged.
 
 Agent suggestions are loaded from `Files/LIST OF AGENTS.xlsx`; choices and typed Agent values are saved in uppercase.
 
