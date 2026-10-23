@@ -338,6 +338,11 @@ function App() {
   const [agentOptions, setAgentOptions] = useState([]);
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("namecraft-dark-mode") === "true");
+
+  useEffect(() => {
+    localStorage.setItem("namecraft-dark-mode", String(darkMode));
+  }, [darkMode]);
 
   useEffect(() => {
     fetch("./dataset.json")
@@ -481,10 +486,10 @@ function App() {
   };
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell${darkMode ? " dark-mode" : ""}`}>
       <nav className="topbar">
         <div className="brand"><span className="brand-mark">N</span><span>namecraft <span className="brand-accent">by gelo</span></span></div>
-        <span className="topbar-note">Namecraft by Gelo · Excel name formatter</span>
+        <div className="topbar-actions"><button className="theme-toggle" type="button" onClick={() => setDarkMode(current => !current)}>{darkMode ? "☀ LIGHT" : "☾ DARK"}</button><span className="topbar-note">Namecraft by Gelo · Excel name formatter</span></div>
       </nav>
 
       <section className="hero">
