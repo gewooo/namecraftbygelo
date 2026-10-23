@@ -87,10 +87,6 @@ function findColumn(headers, candidates) {
   return null;
 }
 
-function titleCase(value) {
-  return clean(value).toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase());
-}
-
 function splitSuffix(value) {
   const words = clean(value).split(" ").filter(Boolean);
   const suffixIndex = words.findIndex(word => suffixes.includes(word.toLowerCase()));
@@ -269,18 +265,17 @@ function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
   });
   const sheet = XLSX.utils.json_to_sheet(output);
   const memberFormulaColumns = [
-    ["F", "B", "first"],
-    ["G", "C", "middle"],
-    ["H", "D", "last"],
-    ["I", "E", "suffix"]
+    ["F", "first"],
+    ["G", "middle"],
+    ["H", "last"],
+    ["I", "suffix"]
   ];
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
     const rowNumber = rowIndex + 2;
-    for (const [memberColumn, payorColumn, field] of memberFormulaColumns) {
+    for (const [memberColumn, field] of memberFormulaColumns) {
       sheet[`${memberColumn}${rowNumber}`] = {
         t: "s",
-        v: titleCase(rows[rowIndex][field]),
-        f: `PROPER(${payorColumn}${rowNumber})`
+        v: uppercaseValue(rows[rowIndex][field])
       };
     }
   }

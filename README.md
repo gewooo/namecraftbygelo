@@ -47,4 +47,6 @@ Sex is not added automatically; existing `Sex` values are preserved and blank va
 
 Full-name tokens are preserved in the formatted fields; middle names are not shortened to initials, and unmatched words are not discarded.
 
+Member Name fields are copied from the separated Payor Name fields in uppercase; no `PROPER` formula is added.
+
 The exported workbook uses a blue styled header, Aptos fonts, alternating row fills, borders, column widths, and an Excel autofilter over the `Main Encoding` table.
