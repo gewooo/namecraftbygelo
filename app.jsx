@@ -235,7 +235,7 @@ function downloadFileName(originalFileName) {
   const extensionIndex = originalFileName.lastIndexOf(".");
   const baseName = extensionIndex > 0 ? originalFileName.slice(0, extensionIndex) : originalFileName;
   const cleanedBaseName = baseName.split("-")[0].replace(/\b\d+\b/g, "").replace(/\s+/g, " ").trim();
-  return `${cleanedBaseName || "formatted-names"}.xlsx`;
+  return `${cleanedBaseName || "formatted-names"} (formatted).xlsx`;
 }
 
 function templateFileName(originalFileName) {
