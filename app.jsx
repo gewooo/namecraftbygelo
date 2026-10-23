@@ -33,6 +33,10 @@ function uppercaseValue(value) {
 }
 
 function dateInputValue(value) {
+  return birthDateValue(value);
+}
+
+function birthDateValue(value) {
   const text = clean(value);
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
   const match = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
@@ -293,7 +297,7 @@ function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
       "Member Middle Name": "",
       "Member Last Name": "",
       "Member Suffix": "",
-      "Birth Date": clean(row.birthDate) || value("Birth Date", "Birthday", "Date of Birth"),
+      "Birth Date": birthDateValue(row.birthDate) || birthDateValue(value("Birth Date", "Birthday", "Date of Birth")),
       "Sex": value("Sex"),
       "Civil Status": value("Civil Status"),
       "Contact Number": value("Contact Number", "Contact", "Phone", "Mobile"),
