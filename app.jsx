@@ -242,12 +242,12 @@ function readWorkbook(file, trainingData, onComplete, onError) {
   reader.readAsArrayBuffer(file);
 }
 
-function readBirthdayWorkbook(file, onComplete, onError) {
+function readBirthdayWorkbook(file, selectedSheetName, onComplete, onError) {
   const reader = new FileReader();
   reader.onload = event => {
     try {
       const workbook = XLSX.read(event.target.result, { type: "array", cellDates: true });
-      const sheetName = workbook.SheetNames.find(name => !/guide|read me/i.test(name)) || workbook.SheetNames[0];
+      const sheetName = selectedSheetName || workbook.SheetNames[0];
       const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false })
         .filter(row => row.some(value => clean(value)));
       if (!matrix.length) throw new Error("The birthday workbook does not contain any data.");
@@ -271,19 +271,23 @@ function readBirthdayWorkbook(file, onComplete, onError) {
         return { key: nameKey(name), birthDate: birthDateValue(row[birthdayColumn]) };
       }).filter(record => record.key && record.birthDate);
       if (!records.length) throw new Error("The birthday workbook has no usable name and birthday rows.");
-      onComplete({
-        file,
-        fileName: file.name,
-        sheetName,
-        sheetNames: workbook.SheetNames,
-        headers,
-        nameColumns: nameColumn ? [nameColumn] : [firstColumn, middleColumn, lastColumn].filter(Boolean),
-        birthdayColumn,
-        sourceRowCount: matrix.length - 1,
-        records
-      });
+      onComplete({ file, fileName: file.name, sheetName, sheetNames: workbook.SheetNames, headers, nameColumns: nameColumn ? [nameColumn] : [firstColumn, middleColumn, lastColumn].filter(Boolean), birthdayColumn, sourceRowCount: matrix.length - 1, records });
     } catch (error) {
       onError(error.message || "Unable to read the birthday workbook.");
+    }
+  };
+  reader.onerror = () => onError("Unable to read the birthday workbook.");
+  reader.readAsArrayBuffer(file);
+}
+
+function readBirthdaySheetNames(file, onComplete, onError) {
+  const reader = new FileReader();
+  reader.onload = event => {
+    try {
+      const workbook = XLSX.read(event.target.result, { type: "array", bookSheets: true });
+      onComplete(workbook.SheetNames);
+    } catch (error) {
+      onError(error.message || "Unable to inspect the birthday workbook.");
     }
   };
   reader.onerror = () => onError("Unable to read the birthday workbook.");
@@ -424,6 +428,8 @@ function App() {
   const [selectedRows, setSelectedRows] = useState([]);
   const [birthdayFileName, setBirthdayFileName] = useState("");
   const [pendingBirthdayWorkbook, setPendingBirthdayWorkbook] = useState(null);
+  const [birthdaySheetNames, setBirthdaySheetNames] = useState([]);
+  const [birthdaySheetName, setBirthdaySheetName] = useState("");
   const [companyDeployment, setCompanyDeployment] = useState("");
   const [agent, setAgent] = useState("");
   const [agentOptions, setAgentOptions] = useState([]);
@@ -485,6 +491,8 @@ function App() {
     setSelectedRows([]);
     setPendingBirthdayWorkbook(null);
     setBirthdayFileName("");
+    setBirthdaySheetNames([]);
+    setBirthdaySheetName("");
     readWorkbook(file, trainingData, setResult, setError);
   };
   const processBirthdayFile = file => {
@@ -494,7 +502,18 @@ function App() {
       setError("Please upload an Excel workbook (.xlsx or .xls) or CSV file for birthdays.");
       return;
     }
-    readBirthdayWorkbook(file, birthdayWorkbook => {
+    setBirthdayFileName("");
+    setPendingBirthdayWorkbook(null);
+    readBirthdaySheetNames(file, sheetNames => {
+      setBirthdaySheetNames(sheetNames);
+      setBirthdaySheetName(sheetNames[0] || "");
+    }, setError);
+  };
+  const inspectBirthdaySheet = () => {
+    const fileInput = document.querySelector(".birthday-upload input");
+    const file = fileInput?.files?.[0];
+    if (!file || !birthdaySheetName) return;
+    readBirthdayWorkbook(file, birthdaySheetName, birthdayWorkbook => {
       setPendingBirthdayWorkbook(birthdayWorkbook);
     }, setError);
   };
@@ -595,6 +614,8 @@ function App() {
     setSelectedRows([]);
     setBirthdayFileName("");
     setPendingBirthdayWorkbook(null);
+    setBirthdaySheetNames([]);
+    setBirthdaySheetName("");
   };
   const toggleRowSelection = id => {
     setSelectedRows(current => current.includes(id) ? current.filter(rowId => rowId !== id) : [...current, id]);
@@ -663,7 +684,7 @@ function App() {
         <section className="results-section">
           <div className="results-heading">
             <div><div className="eyebrow"><span className="status-dot"></span> PREVIEW READY</div><h2>{result.rows.length} names formatted</h2><p className="file-meta">◫ {fileName} <span>·</span> Sheet: {result.sheetName}</p></div>
-            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); setBirthdayFileName(""); setPendingBirthdayWorkbook(null); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="formatted-button" onClick={downloadFormatted}>↓ Formatted</button><button className="download-button" onClick={downloadFiles}>↓ All .xlsx</button></div>
+            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); setBirthdayFileName(""); setPendingBirthdayWorkbook(null); setBirthdaySheetNames([]); setBirthdaySheetName(""); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="formatted-button" onClick={downloadFormatted}>↓ Formatted</button><button className="download-button" onClick={downloadFiles}>↓ All .xlsx</button></div>
           </div>
           <div className="preview-toolbar">
             <div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div>
@@ -671,13 +692,13 @@ function App() {
               <label className="company-field">Company / Deployment<input value={companyDeployment} onChange={event => setCompanyDeployment(event.target.value)} placeholder="Type company name" /></label>
               <label className="company-field">Agent<input list="agent-options" value={agent} onChange={event => setAgent(event.target.value.toUpperCase())} placeholder="Type agent name" /></label>
               <label className="company-field birthday-upload">Birthday file<input type="file" accept=".xlsx,.xls,.csv" onChange={event => processBirthdayFile(event.target.files[0])} /></label>
+              {birthdaySheetNames.length > 0 && <label className="company-field birthday-sheet">Sheet<select value={birthdaySheetName} onChange={event => setBirthdaySheetName(event.target.value)}>{birthdaySheetNames.map(sheetName => <option key={sheetName} value={sheetName}>{sheetName}</option>)}</select><button className="secondary-button" type="button" onClick={inspectBirthdaySheet}>Review sheet</button></label>}
               <datalist id="agent-options">{agentOptions.map(option => <option key={option} value={option} />)}</datalist>
             </div>
             {birthdayFileName && <div className="birthday-status">Birthday matches loaded from {birthdayFileName}</div>}
             {pendingBirthdayWorkbook && <div className="birthday-confirmation">
               <strong>Confirm birthday workbook</strong>
               <span>File: {pendingBirthdayWorkbook.fileName}</span>
-              <span>Sheets: {pendingBirthdayWorkbook.sheetNames.join(", ")}</span>
               <span>Selected sheet: {pendingBirthdayWorkbook.sheetName}</span>
               <span>Headers: {pendingBirthdayWorkbook.headers.join(", ")}</span>
               <span>Name columns: {pendingBirthdayWorkbook.nameColumns.join(", ")}</span>
