@@ -41,7 +41,7 @@ Each row also includes `↔` for changing `KRISTINE DE` + `GUZMAN` into `KRISTIN
 
 The `ALL` action applies the complete-middle-name change to every row in the uploaded file.
 
-Select rows with the checkboxes to download only those rows. The `All .xlsx` action still downloads the complete file.
+Select rows with the checkboxes to download only those rows. The `Formatted` action downloads only the complete names workbook, while `All .xlsx` downloads the names workbook together with the unchanged listing template.
 
 Use `Reset file` to discard all row edits and clear the Company / Deployment and Agent values.
 
