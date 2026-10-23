@@ -225,7 +225,7 @@ function formatRow(row, headers, trainingData) {
   const formatted = formatNameParts(last, first, middle, suffix);
   const birthDateColumn = findColumn(headers, ["Birth Date", "Birthday", "Date of Birth"]);
   const birthDate = birthDateColumn ? clean(row[birthDateColumn]) : "";
-  return { source, first, middle, last, suffix, birthDate, membershipFee, formatted };
+  return { source, originalName: source, first, middle, last, suffix, birthDate, membershipFee, formatted };
 }
 
 function readWorkbook(file, trainingData, onComplete, onError) {
@@ -544,7 +544,7 @@ function App() {
     setResult(current => {
       if (!current) return current;
       const rows = current.rows.map(row => {
-        const match = birthdays.get(nameKey(row.source)) || birthdays.get(nameKey(row.formatted));
+        const match = birthdays.get(nameKey(row.originalName));
         return match ? { ...row, birthDate: match } : row;
       });
       return { ...current, rows, originalRows: rows };
@@ -712,9 +712,8 @@ function App() {
             <div className="preview-inputs">
               <label className="company-field">Company / Deployment<input value={companyDeployment} onChange={event => setCompanyDeployment(event.target.value)} placeholder="Type company name" /></label>
               <label className="company-field">Agent<input list="agent-options" value={agent} onChange={event => setAgent(event.target.value.toUpperCase())} placeholder="Type agent name" /></label>
-              <label className="company-field birthday-upload">Birthday file<input type="file" accept=".xlsx,.xls,.csv" onChange={event => processBirthdayFile(event.target.files[0])} /></label>
+              <label className="company-field birthday-upload">Birthday file<span className="file-picker-button">Choose birthday file</span><input type="file" accept=".xlsx,.xls,.csv" onChange={event => processBirthdayFile(event.target.files[0])} /></label>
               {birthdaySheetNames.length > 0 && <label className="company-field birthday-sheet">Sheet<select value={birthdaySheetName} onChange={event => setBirthdaySheetName(event.target.value)}>{birthdaySheetNames.map(sheetName => <option key={sheetName} value={sheetName}>{sheetName}</option>)}</select><button className="secondary-button" type="button" onClick={inspectBirthdaySheet}>Review sheet</button></label>}
-              <span className="birthday-help">Recognizes: Date of Birth, Birth Date, Birthday, Birthdate, DOB · Names: FULL NAME, Firstname, Lastname, Middle Name</span>
               <datalist id="agent-options">{agentOptions.map(option => <option key={option} value={option} />)}</datalist>
             </div>
             {birthdayFileName && <div className="birthday-status">Birthday matches loaded from {birthdayFileName}</div>}
