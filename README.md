@@ -19,6 +19,8 @@ Files are processed locally in the browser. The complete preview is editable and
 
 The workbook in `Files/2026 Listing Format.xlsx` is kept as a reference template and is not loaded automatically. Choose a workbook to begin processing without modifying the source file. Membership fees exported to `Premium` are numeric values without currency symbols.
 
+Member First Name, Middle Name, Last Name, and Suffix are exported as Excel `PROPER()` formulas that reference the corresponding Payor fields.
+
 After upload, the Company / Deployment field can be used to fill that column for every exported row.
 
 The Agent field similarly fills the `AGENT` column for every exported row when provided.

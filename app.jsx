@@ -251,10 +251,10 @@ function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
       "Payor Middle Name": row.middle,
       "Payor Last Name": row.last,
       "Payor Suffix": row.suffix,
-      "Member First Name": value("Member First Name"),
-      "Member Middle Name": value("Member Middle Name"),
-      "Member Last Name": value("Member Last Name"),
-      "Member Suffix": value("Member Suffix"),
+      "Member First Name": "",
+      "Member Middle Name": "",
+      "Member Last Name": "",
+      "Member Suffix": "",
       "Birth Date": value("Birth Date", "Birthday", "Date of Birth"),
       "Sex": value("Sex"),
       "Civil Status": value("Civil Status"),
@@ -268,6 +268,22 @@ function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
     };
   });
   const sheet = XLSX.utils.json_to_sheet(output);
+  const memberFormulaColumns = [
+    ["F", "B", "first"],
+    ["G", "C", "middle"],
+    ["H", "D", "last"],
+    ["I", "E", "suffix"]
+  ];
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+    const rowNumber = rowIndex + 2;
+    for (const [memberColumn, payorColumn, field] of memberFormulaColumns) {
+      sheet[`${memberColumn}${rowNumber}`] = {
+        t: "s",
+        v: titleCase(rows[rowIndex][field]),
+        f: `PROPER(${payorColumn}${rowNumber})`
+      };
+    }
+  }
   const lastColumn = XLSX.utils.encode_col(Object.keys(output[0]).length - 1);
   const lastRow = output.length + 1;
   sheet["!autofilter"] = { ref: `A1:${lastColumn}${lastRow}` };
