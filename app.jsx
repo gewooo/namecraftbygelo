@@ -271,7 +271,17 @@ function readBirthdayWorkbook(file, onComplete, onError) {
         return { key: nameKey(name), birthDate: birthDateValue(row[birthdayColumn]) };
       }).filter(record => record.key && record.birthDate);
       if (!records.length) throw new Error("The birthday workbook has no usable name and birthday rows.");
-      onComplete({ file, fileName: file.name, records });
+      onComplete({
+        file,
+        fileName: file.name,
+        sheetName,
+        sheetNames: workbook.SheetNames,
+        headers,
+        nameColumns: nameColumn ? [nameColumn] : [firstColumn, middleColumn, lastColumn].filter(Boolean),
+        birthdayColumn,
+        sourceRowCount: matrix.length - 1,
+        records
+      });
     } catch (error) {
       onError(error.message || "Unable to read the birthday workbook.");
     }
@@ -413,6 +423,7 @@ function App() {
   const [page, setPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState([]);
   const [birthdayFileName, setBirthdayFileName] = useState("");
+  const [pendingBirthdayWorkbook, setPendingBirthdayWorkbook] = useState(null);
   const [companyDeployment, setCompanyDeployment] = useState("");
   const [agent, setAgent] = useState("");
   const [agentOptions, setAgentOptions] = useState([]);
@@ -472,6 +483,8 @@ function App() {
     setFileName(file.name);
     setPage(1);
     setSelectedRows([]);
+    setPendingBirthdayWorkbook(null);
+    setBirthdayFileName("");
     readWorkbook(file, trainingData, setResult, setError);
   };
   const processBirthdayFile = file => {
@@ -482,17 +495,25 @@ function App() {
       return;
     }
     readBirthdayWorkbook(file, birthdayWorkbook => {
-      const birthdays = new Map(birthdayWorkbook.records.map(record => [record.key, record.birthDate]));
-      setResult(current => {
-        if (!current) return current;
-        const rows = current.rows.map(row => {
-          const match = birthdays.get(nameKey(row.source)) || birthdays.get(nameKey(row.formatted));
-          return match ? { ...row, birthDate: match } : row;
-        });
-        return { ...current, rows, originalRows: rows };
-      });
-      setBirthdayFileName(birthdayWorkbook.fileName);
+      setPendingBirthdayWorkbook(birthdayWorkbook);
     }, setError);
+  };
+  const confirmBirthdayFile = () => {
+    if (!pendingBirthdayWorkbook) return;
+    const birthdays = new Map(pendingBirthdayWorkbook.records.map(record => [record.key, record.birthDate]));
+    setResult(current => {
+      if (!current) return current;
+      const rows = current.rows.map(row => {
+        const match = birthdays.get(nameKey(row.source)) || birthdays.get(nameKey(row.formatted));
+        return match ? { ...row, birthDate: match } : row;
+      });
+      return { ...current, rows, originalRows: rows };
+    });
+    setBirthdayFileName(pendingBirthdayWorkbook.fileName);
+    setPendingBirthdayWorkbook(null);
+  };
+  const cancelBirthdayFile = () => {
+    setPendingBirthdayWorkbook(null);
   };
 
   const visibleRows = result?.rows.filter(row =>
@@ -573,6 +594,7 @@ function App() {
     setPage(1);
     setSelectedRows([]);
     setBirthdayFileName("");
+    setPendingBirthdayWorkbook(null);
   };
   const toggleRowSelection = id => {
     setSelectedRows(current => current.includes(id) ? current.filter(rowId => rowId !== id) : [...current, id]);
@@ -641,7 +663,7 @@ function App() {
         <section className="results-section">
           <div className="results-heading">
             <div><div className="eyebrow"><span className="status-dot"></span> PREVIEW READY</div><h2>{result.rows.length} names formatted</h2><p className="file-meta">◫ {fileName} <span>·</span> Sheet: {result.sheetName}</p></div>
-            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); setBirthdayFileName(""); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="formatted-button" onClick={downloadFormatted}>↓ Formatted</button><button className="download-button" onClick={downloadFiles}>↓ All .xlsx</button></div>
+            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); setBirthdayFileName(""); setPendingBirthdayWorkbook(null); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="formatted-button" onClick={downloadFormatted}>↓ Formatted</button><button className="download-button" onClick={downloadFiles}>↓ All .xlsx</button></div>
           </div>
           <div className="preview-toolbar">
             <div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div>
@@ -652,6 +674,17 @@ function App() {
               <datalist id="agent-options">{agentOptions.map(option => <option key={option} value={option} />)}</datalist>
             </div>
             {birthdayFileName && <div className="birthday-status">Birthday matches loaded from {birthdayFileName}</div>}
+            {pendingBirthdayWorkbook && <div className="birthday-confirmation">
+              <strong>Confirm birthday workbook</strong>
+              <span>File: {pendingBirthdayWorkbook.fileName}</span>
+              <span>Sheets: {pendingBirthdayWorkbook.sheetNames.join(", ")}</span>
+              <span>Selected sheet: {pendingBirthdayWorkbook.sheetName}</span>
+              <span>Headers: {pendingBirthdayWorkbook.headers.join(", ")}</span>
+              <span>Name columns: {pendingBirthdayWorkbook.nameColumns.join(", ")}</span>
+              <span>Birthday column: {pendingBirthdayWorkbook.birthdayColumn}</span>
+              <span>Rows: {pendingBirthdayWorkbook.sourceRowCount} total, {pendingBirthdayWorkbook.records.length} usable records</span>
+              <div><button className="secondary-button" type="button" onClick={cancelBirthdayFile}>Cancel</button><button className="download-button" type="button" onClick={confirmBirthdayFile}>Confirm and match</button></div>
+            </div>}
             <div className="preview-tools"><button className="join-all-button" type="button" title="Move the complete middle name into the first name for every row" onClick={joinAllMiddleWithFirst}>ALL</button><button className="join-all-button" type="button" title="Download only selected rows" disabled={!selectedRows.length} onClick={downloadSelected}>↓ {selectedRows.length}</button><label className="search-box">⌕<input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search payor names…" /></label></div>
           </div>
           {visibleRows.length > 0 && <div className="pagination pagination-top"><span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visibleRows.length)} of {visibleRows.length}</span><div><button className="pagination-button" disabled={page === 1} onClick={() => setPage(current => current - 1)}>Previous</button><strong>Page {page} of {pageCount}</strong><button className="pagination-button" disabled={page === pageCount} onClick={() => setPage(current => current + 1)}>Next</button></div></div>}
