@@ -235,8 +235,7 @@ function downloadFileName(originalFileName) {
   const extensionIndex = originalFileName.lastIndexOf(".");
   const baseName = extensionIndex > 0 ? originalFileName.slice(0, extensionIndex) : originalFileName;
   const cleanedBaseName = baseName.split("-")[0].replace(/\b\d+\b/g, "").replace(/\s+/g, " ").trim();
-  const withoutNew = cleanedBaseName.replace(/\bNEW\b/gi, "").replace(/\s+/g, " ").trim();
-  return `${withoutNew || "formatted-names"} NEW.xlsx`;
+  return `${cleanedBaseName || "formatted-names"}.xlsx`;
 }
 
 function templateFileName(originalFileName) {
@@ -246,10 +245,9 @@ function templateFileName(originalFileName) {
   const extensionIndex = originalFileName.lastIndexOf(".");
   const baseName = extensionIndex > 0 ? originalFileName.slice(0, extensionIndex) : originalFileName;
   const cleanedBaseName = baseName
-    .replace(/\bNEW\b/gi, "")
+    .split("-")[0]
     .replace(/\b\d+\b/g, "")
     .replace(/\s+/g, " ")
-    .replace(/\s*[-_]\s*$/, "")
     .trim();
   return `${cleanedBaseName || "listing-form"}.xlsx`;
 }

@@ -51,4 +51,4 @@ Member Name fields are copied from the separated Payor Name fields in uppercase;
 
 The exported workbook uses a blue styled header, Aptos fonts, alternating row fills, borders, column widths, and an Excel autofilter over the `Main Encoding` table.
 
-Each download produces two files: the formatted workbook and an unchanged copy of `Files/2026 Listing Format.xlsx`. Both filenames use the company name before the date portion of the uploaded filename; the formatted workbook adds `NEW`, while the template copy has `NEW` removed.
+Each download produces two files: the formatted workbook and an unchanged copy of `Files/2026 Listing Format.xlsx`. Both filenames use only the company name before the first hyphen, with no date, `NEW`, or additional suffix.
