@@ -332,6 +332,7 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [companyDeployment, setCompanyDeployment] = useState("");
   const [agent, setAgent] = useState("");
   const [agentOptions, setAgentOptions] = useState([]);
@@ -383,6 +384,7 @@ function App() {
     }
     setFileName(file.name);
     setPage(1);
+    setSelectedRows([]);
     readWorkbook(file, trainingData, setResult, setError);
   };
 
@@ -420,6 +422,16 @@ function App() {
       })
     } : current);
   };
+  const joinSelectedMiddleWithFirst = () => {
+    setResult(current => current ? {
+      ...current,
+      rows: current.rows.map(row => {
+        if (!selectedRows.includes(row.id) || !row.middle) return row;
+        const first = [row.first, row.middle].filter(Boolean).join(" ");
+        return { ...row, first, middle: "", formatted: formatNameParts(row.last, first, "", row.suffix) };
+      })
+    } : current);
+  };
   const joinFirstMiddleWordWithFirst = id => {
     setResult(current => current ? {
       ...current,
@@ -452,6 +464,20 @@ function App() {
     setAgent("");
     setQuery("");
     setPage(1);
+    setSelectedRows([]);
+  };
+  const toggleRowSelection = id => {
+    setSelectedRows(current => current.includes(id) ? current.filter(rowId => rowId !== id) : [...current, id]);
+  };
+  const togglePageSelection = () => {
+    const pageIds = pageRows.map(row => row.id);
+    setSelectedRows(current => pageIds.every(id => current.includes(id))
+      ? current.filter(id => !pageIds.includes(id))
+      : [...new Set([...current, ...pageIds])]);
+  };
+  const downloadSelected = () => {
+    const selected = result?.rows.filter(row => selectedRows.includes(row.id)) || [];
+    if (selected.length) downloadWorkbook(selected, fileName, companyDeployment, agent);
   };
 
   return (
@@ -497,7 +523,7 @@ function App() {
         <section className="results-section">
           <div className="results-heading">
             <div><div className="eyebrow"><span className="status-dot"></span> PREVIEW READY</div><h2>{result.rows.length} names formatted</h2><p className="file-meta">◫ {fileName} <span>·</span> Sheet: {result.sheetName}</p></div>
-            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment, agent)}>↓ Download .xlsx</button></div>
+            <div className="actions"><button className="secondary-button" onClick={resetFile}>Reset file</button><button className="secondary-button" onClick={() => { setResult(null); setFileName(""); setQuery(""); setPage(1); setSelectedRows([]); setCompanyDeployment(""); setAgent(""); }}>Upload another</button><button className="secondary-button" disabled={!selectedRows.length} onClick={downloadSelected}>↓ Selected ({selectedRows.length})</button><button className="download-button" onClick={() => downloadWorkbook(result.rows, fileName, companyDeployment, agent)}>↓ All .xlsx</button></div>
           </div>
           <div className="preview-toolbar">
             <div className="preview-title"><span className="table-icon">▤</span> PAYOR NAME PREVIEW</div>
@@ -506,10 +532,10 @@ function App() {
               <label className="company-field">Agent<input list="agent-options" value={agent} onChange={event => setAgent(event.target.value.toUpperCase())} placeholder="Type agent name" /></label>
               <datalist id="agent-options">{agentOptions.map(option => <option key={option} value={option} />)}</datalist>
             </div>
-            <div className="preview-tools"><button className="join-all-button" type="button" title="Move the complete middle name into the first name for every row" onClick={joinAllMiddleWithFirst}>ALL</button><label className="search-box">⌕<input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search payor names…" /></label></div>
+            <div className="preview-tools"><button className="join-all-button" type="button" title="Move the complete middle name into the first name for every row" onClick={joinAllMiddleWithFirst}>ALL</button><button className="join-all-button" type="button" title="Download only selected rows" disabled={!selectedRows.length} onClick={downloadSelected}>↓ {selectedRows.length}</button><label className="search-box">⌕<input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search payor names…" /></label></div>
           </div>
           {visibleRows.length > 0 && <div className="pagination pagination-top"><span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visibleRows.length)} of {visibleRows.length}</span><div><button className="pagination-button" disabled={page === 1} onClick={() => setPage(current => current - 1)}>Previous</button><strong>Page {page} of {pageCount}</strong><button className="pagination-button" disabled={page === pageCount} onClick={() => setPage(current => current + 1)}>Next</button></div></div>}
-          <div className="table-wrap"><table><thead><tr><th>#</th><th>PAYOR NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>LAST NAME</th><th>SUFFIX</th><th>MEMBERSHIP FEE</th><th>FORMATTED NAME</th><th>ACTION</th></tr></thead><tbody>{pageRows.map(row => <tr key={row.id}><td className="row-number">{String(row.id).padStart(2, "0")}</td><td className="muted">{row.source || "—"}</td><td><input className="name-edit" value={row.first} onChange={event => updateRow(row.id, "first", event.target.value)} /></td><td><input className="name-edit" value={row.middle} onChange={event => updateRow(row.id, "middle", event.target.value)} /></td><td><input className="name-edit" value={row.last} onChange={event => updateRow(row.id, "last", event.target.value)} /></td><td><input className="name-edit suffix-edit" value={row.suffix} onChange={event => updateRow(row.id, "suffix", event.target.value)} /></td><td className="fee-value">{row.membershipFee || "—"}</td><td className="formatted">{row.formatted || "Needs review"}</td><td><button className="join-button" type="button" title="Move the complete middle name into the first name for this row" disabled={!row.middle} onClick={event => { event.stopPropagation(); joinMiddleWithFirst(row.id); }}>JOIN</button><button className="join-button join-first-word-button" type="button" title="Move only the first word of the middle name into the first name for this row" disabled={!row.middle} onClick={event => { event.stopPropagation(); joinFirstMiddleWordWithFirst(row.id); }}>1ST</button><button className="join-button move-first-to-middle-button" type="button" title="Move the last word of the first name into the beginning of the middle name for this row" disabled={!row.first || !row.first.includes(" ")} onClick={event => { event.stopPropagation(); moveLastFirstWordToMiddle(row.id); }}>↔</button></td></tr>)}</tbody></table></div>
+          <div className="table-wrap"><table><thead><tr><th><input type="checkbox" checked={pageRows.length > 0 && pageRows.every(row => selectedRows.includes(row.id))} onChange={togglePageSelection} aria-label="Select all rows on this page" /></th><th>#</th><th>PAYOR NAME</th><th>FIRST NAME</th><th>MIDDLE NAME</th><th>LAST NAME</th><th>SUFFIX</th><th>MEMBERSHIP FEE</th><th>FORMATTED NAME</th><th>ACTION</th></tr></thead><tbody>{pageRows.map(row => <tr key={row.id}><td><input type="checkbox" checked={selectedRows.includes(row.id)} onChange={() => toggleRowSelection(row.id)} aria-label={`Select row ${row.id}`} /></td><td className="row-number">{String(row.id).padStart(2, "0")}</td><td className="muted">{row.source || "—"}</td><td><input className="name-edit" value={row.first} onChange={event => updateRow(row.id, "first", event.target.value)} /></td><td><input className="name-edit" value={row.middle} onChange={event => updateRow(row.id, "middle", event.target.value)} /></td><td><input className="name-edit" value={row.last} onChange={event => updateRow(row.id, "last", event.target.value)} /></td><td><input className="name-edit suffix-edit" value={row.suffix} onChange={event => updateRow(row.id, "suffix", event.target.value)} /></td><td className="fee-value">{row.membershipFee || "—"}</td><td className="formatted">{row.formatted || "Needs review"}</td><td><button className="join-button" type="button" title="Move the complete middle name into the first name for this row" disabled={!row.middle} onClick={event => { event.stopPropagation(); joinMiddleWithFirst(row.id); }}>JOIN</button><button className="join-button join-first-word-button" type="button" title="Move only the first word of the middle name into the first name for this row" disabled={!row.middle} onClick={event => { event.stopPropagation(); joinFirstMiddleWordWithFirst(row.id); }}>1ST</button><button className="join-button move-first-to-middle-button" type="button" title="Move the last word of the first name into the beginning of the middle name for this row" disabled={!row.first || !row.first.includes(" ")} onClick={event => { event.stopPropagation(); moveLastFirstWordToMiddle(row.id); }}>↔</button></td></tr>)}</tbody></table></div>
           {visibleRows.length > 0 && <div className="pagination"><span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visibleRows.length)} of {visibleRows.length}</span><div><button className="pagination-button" disabled={page === 1} onClick={() => setPage(current => current - 1)}>Previous</button><strong>Page {page} of {pageCount}</strong><button className="pagination-button" disabled={page === pageCount} onClick={() => setPage(current => current + 1)}>Next</button></div></div>}
           {!visibleRows.length && <div className="empty-state">No names match “{query}”.</div>}
         </section>
