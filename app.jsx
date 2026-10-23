@@ -103,6 +103,24 @@ function findColumn(headers, candidates) {
   return null;
 }
 
+function findBirthdayHeaderRow(matrix) {
+  const candidates = [
+    "Payor Name", "Full Name", "Name", "Employee Name", "Member Name",
+    "First Name", "Firstname", "Last Name", "Lastname", "Date of Birth",
+    "Birth Date", "Birthday", "Birthdate", "DOB"
+  ];
+  let bestIndex = -1;
+  let bestScore = 0;
+  matrix.forEach((row, index) => {
+    const score = row.map(clean).filter(value => candidates.some(candidate => headerKey(value) === headerKey(candidate))).length;
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = index;
+    }
+  });
+  return bestIndex;
+}
+
 function splitSuffix(value) {
   const words = clean(value).split(" ").filter(Boolean);
   const suffixIndex = words.findIndex(word => suffixes.includes(word.toLowerCase()));
@@ -251,16 +269,18 @@ function readBirthdayWorkbook(file, selectedSheetName, onComplete, onError) {
       const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false })
         .filter(row => row.some(value => clean(value)));
       if (!matrix.length) throw new Error("The birthday workbook does not contain any data.");
-      const headers = matrix[0].map(clean);
-      const nameColumn = findColumn(headers, ["Payor Name", "Full Name", "Name", "Employee Name", "Member Name"]);
-      const firstColumn = findColumn(headers, ["First Name", "Payor First Name", "Member First Name", "firstname"]);
-      const middleColumn = findColumn(headers, ["Middle Name", "Payor Middle Name", "Member Middle Name", "middlename"]);
-      const lastColumn = findColumn(headers, ["Last Name", "Payor Last Name", "Member Last Name", "lastname"]);
-      const birthdayColumn = findColumn(headers, ["Birth Date", "Birthday", "Date of Birth", "DOB"]);
+      const headerRowIndex = findBirthdayHeaderRow(matrix);
+      if (headerRowIndex < 0) throw new Error("Could not find a header row with name or birthday columns.");
+      const headers = matrix[headerRowIndex].map(clean);
+      const nameColumn = findColumn(headers, ["Payor Name", "Full Name", "FULL NAME", "Name", "Employee Name", "Member Name"]);
+      const firstColumn = findColumn(headers, ["First Name", "Firstname", "Payor First Name", "Member First Name", "firstname"]);
+      const middleColumn = findColumn(headers, ["Middle Name", "Middlename", "Payor Middle Name", "Member Middle Name", "middlename"]);
+      const lastColumn = findColumn(headers, ["Last Name", "Lastname", "Payor Last Name", "Member Last Name", "lastname"]);
+      const birthdayColumn = findColumn(headers, ["Birth Date", "Birthday", "Birthdate", "Date of Birth", "DOB"]);
       if (!birthdayColumn || (!nameColumn && (!firstColumn || !lastColumn))) {
         throw new Error("The birthday workbook needs a name column and a birthday column.");
       }
-      const records = matrix.slice(1).map(values => {
+      const records = matrix.slice(headerRowIndex + 1).map(values => {
         const row = headers.reduce((record, header, index) => {
           record[header] = values[index] ?? "";
           return record;
@@ -271,7 +291,8 @@ function readBirthdayWorkbook(file, selectedSheetName, onComplete, onError) {
         return { key: nameKey(name), birthDate: birthDateValue(row[birthdayColumn]) };
       }).filter(record => record.key && record.birthDate);
       if (!records.length) throw new Error("The birthday workbook has no usable name and birthday rows.");
-      onComplete({ file, fileName: file.name, sheetName, sheetNames: workbook.SheetNames, headers, nameColumns: nameColumn ? [nameColumn] : [firstColumn, middleColumn, lastColumn].filter(Boolean), birthdayColumn, sourceRowCount: matrix.length - 1, records });
+      onComplete({ file, fileName: file.name, sheetName, sheetNames: workbook.SheetNames, headers, nameColumns: nameColumn ? [nameColumn] : [firstColumn, middleColumn, lastColumn].filter(Boolean), birthdayColumn,       headerRowIndex,
+      sourceRowCount: matrix.length - headerRowIndex - 1, records });
     } catch (error) {
       onError(error.message || "Unable to read the birthday workbook.");
     }
@@ -693,6 +714,7 @@ function App() {
               <label className="company-field">Agent<input list="agent-options" value={agent} onChange={event => setAgent(event.target.value.toUpperCase())} placeholder="Type agent name" /></label>
               <label className="company-field birthday-upload">Birthday file<input type="file" accept=".xlsx,.xls,.csv" onChange={event => processBirthdayFile(event.target.files[0])} /></label>
               {birthdaySheetNames.length > 0 && <label className="company-field birthday-sheet">Sheet<select value={birthdaySheetName} onChange={event => setBirthdaySheetName(event.target.value)}>{birthdaySheetNames.map(sheetName => <option key={sheetName} value={sheetName}>{sheetName}</option>)}</select><button className="secondary-button" type="button" onClick={inspectBirthdaySheet}>Review sheet</button></label>}
+              <span className="birthday-help">Recognizes: Date of Birth, Birth Date, Birthday, Birthdate, DOB · Names: FULL NAME, Firstname, Lastname, Middle Name</span>
               <datalist id="agent-options">{agentOptions.map(option => <option key={option} value={option} />)}</datalist>
             </div>
             {birthdayFileName && <div className="birthday-status">Birthday matches loaded from {birthdayFileName}</div>}
@@ -700,6 +722,7 @@ function App() {
               <strong>Confirm birthday workbook</strong>
               <span>File: {pendingBirthdayWorkbook.fileName}</span>
               <span>Selected sheet: {pendingBirthdayWorkbook.sheetName}</span>
+              <span>Header row: {pendingBirthdayWorkbook.headerRowIndex + 1}</span>
               <span>Headers: {pendingBirthdayWorkbook.headers.join(", ")}</span>
               <span>Name columns: {pendingBirthdayWorkbook.nameColumns.join(", ")}</span>
               <span>Birthday column: {pendingBirthdayWorkbook.birthdayColumn}</span>

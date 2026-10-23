@@ -27,7 +27,7 @@ The Agent field similarly fills the `AGENT` column for every exported row when p
 
 Each preview row has a Birthday date input. Entered birthdays are exported for their individual rows in `YYYY-MM-DD` format; existing birthday values are preserved and normalized to the same format when left unchanged.
 
-Use the Birthday file input to upload a separate workbook. After choosing it, select which sheet to use, review the detected headers and columns, and confirm before matching. The chosen sheet must contain a name column (or first, middle, and last name columns) and a `Birth Date`, `Birthday`, `Date of Birth`, or `DOB` column. Exact normalized name matches fill the corresponding preview rows, and unmatched rows remain available for manual entry.
+Use the Birthday file input to upload a separate workbook. After choosing it, select which sheet to use, review the detected header row, headers, and columns, and confirm before matching. Header rows can appear below title or date rows. Supported birthday columns include `Date of Birth`, `Birth Date`, `Birthday`, `Birthdate`, and `DOB`; supported name columns include `FULL NAME`, `First Name`/`Firstname`, `Middle Name`, and `Last Name`/`Lastname`, plus the Payor and Member variants. Exact normalized name matches fill the corresponding preview rows, and unmatched rows remain available for manual entry.
 
 Agent suggestions are loaded from `Files/LIST OF AGENTS.xlsx`; choices and typed Agent values are saved in uppercase.
 
