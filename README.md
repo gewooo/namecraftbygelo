@@ -41,7 +41,7 @@ Each row also includes `↔` for changing `KRISTINE DE` + `GUZMAN` into `KRISTIN
 
 The `ALL` action applies the complete-middle-name change to every row in the uploaded file.
 
-Select rows with the checkboxes to download only those rows. The `Formatted` action downloads only the complete names workbook, while `All .xlsx` downloads the names workbook together with the unchanged listing template.
+Select rows with the checkboxes to download only those rows. The `Download` action downloads only the formatted names workbook.
 
 Use `Reset file` to discard all row edits and clear the Company / Deployment and Agent values.
 
@@ -53,6 +53,6 @@ Member Name fields are copied from the separated Payor Name fields in uppercase;
 
 The exported workbook uses a blue styled header, Aptos fonts, alternating row fills, borders, column widths, and an Excel autofilter over the `Main Encoding` table.
 
-Each download produces two files: the formatted workbook and an unchanged copy of `Files/2026 Listing Format.xlsx`. Both filenames use only the company name before the first hyphen, with no date or `NEW`; the formatted workbook is distinguished with a `(formatted)` label.
+The formatted workbook uses only the company name before the first hyphen, with no date, `NEW`, or extra suffix.
 
 The preview table autofits to the available page width and wraps content instead of adding horizontal scrolling.
