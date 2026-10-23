@@ -342,6 +342,8 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem("namecraft-dark-mode", String(darkMode));
+    document.body.classList.toggle("dark-page", darkMode);
+    return () => document.body.classList.remove("dark-page");
   }, [darkMode]);
 
   useEffect(() => {
