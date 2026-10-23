@@ -28,6 +28,10 @@ function clean(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
 }
 
+function uppercaseValue(value) {
+  return clean(value).toUpperCase();
+}
+
 function headerKey(value) {
   return clean(value).toLowerCase().replace(/[^a-z0-9]/g, "");
 }
