@@ -33,9 +33,9 @@ The editable preview also shows the membership fee as a number without a currenc
 
 If the uploaded sheet has no header row, the app assumes the standard 19-column IMS Main Encoding order and preserves the first row as data.
 
-Each row also includes `1ST` for moving only the first word of the middle name into the first-name field while keeping the remaining middle name.
+Each row also includes `←` for moving only the first word of the middle name into the first-name field while keeping the remaining middle name.
 
-Each row also includes `↔` for changing `KRISTINE DE` + `GUZMAN` into `KRISTINE` + `DE GUZMAN`.
+Each row also includes `→` for changing `KRISTINE DE` + `GUZMAN` into `KRISTINE` + `DE GUZMAN`.
 
 The `ALL` action applies the complete-middle-name change to every row in the uploaded file.
 
