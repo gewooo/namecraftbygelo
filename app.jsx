@@ -542,20 +542,7 @@ function App() {
           throw new Error(`Access list request failed (${response.status}).`);
         return response.text();
       })
-      .then((text) => {
-        const list = parseAccessList(text);
-        setAccessList(list);
-        setLoginUser((current) =>
-          current &&
-          list.some(
-            (entry) =>
-              entry.username.toLowerCase() ===
-              String(current.username).toLowerCase(),
-          )
-            ? current
-            : null,
-        );
-      })
+      .then((text) => setAccessList(parseAccessList(text)))
       .catch((error) =>
         setLoginError(`Could not load the access list: ${error.message}`),
       )
