@@ -17,7 +17,7 @@ Files are processed locally in the browser. The complete preview is editable and
 
 `dataset.json` is used as a runtime reference dataset: exact Payor Name matches use its known first, middle, and last name fields; unseen names use the fallback parser.
 
-The workbook in `Files/2026 Listing Format.xlsx` is kept as a reference template and is not loaded automatically. Choose a workbook to begin processing without modifying the source file. Membership fees exported to `Premium` are numeric values without currency symbols.
+The workbook in `Files/2026 Listing Format.xlsx` is used as the base for the downloaded formatted workbook. The source template is never modified. Membership fees exported to `Premium` are numeric values without currency symbols.
 
 Member First Name, Middle Name, Last Name, and Suffix are exported as Excel `PROPER()` formulas that reference the corresponding Payor fields.
 
@@ -49,7 +49,7 @@ Full-name tokens are preserved in the formatted fields; middle names are not sho
 
 Member Name fields are copied from the separated Payor Name fields in uppercase; no `PROPER` formula is added.
 
-The exported workbook uses a blue styled header, Aptos fonts, alternating row fills, borders, column widths, and an Excel autofilter over the `Main Encoding` table.
+The exported workbook preserves the listing template's workbook structure, styles, column widths, and `Main Encoding` layout while filling it with the formatted rows.
 
 The formatted workbook uses only the company name before the first hyphen, with no date, `NEW`, or extra suffix.
 
