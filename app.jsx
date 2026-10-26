@@ -252,7 +252,7 @@ function downloadFileName(originalFileName) {
   return `${cleanedBaseName || "formatted-names"}.xlsx`;
 }
 
-async function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
+function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
   const output = rows.map(row => {
     const source = row.raw || {};
     const value = (...names) => {
@@ -265,10 +265,10 @@ async function downloadWorkbook(rows, originalFileName, companyDeployment, agent
       "Payor Middle Name": row.middle,
       "Payor Last Name": row.last,
       "Payor Suffix": row.suffix,
-      "Member First Name": uppercaseValue(row.first),
-      "Member Middle Name": uppercaseValue(row.middle),
-      "Member Last Name": uppercaseValue(row.last),
-      "Member Suffix": uppercaseValue(row.suffix),
+      "Member First Name": "",
+      "Member Middle Name": "",
+      "Member Last Name": "",
+      "Member Suffix": "",
       "Birth Date": birthDateValue(row.birthDate) || birthDateValue(value("Birth Date", "Birthday", "Date of Birth")),
       "Sex": value("Sex"),
       "Civil Status": value("Civil Status"),
@@ -281,44 +281,59 @@ async function downloadWorkbook(rows, originalFileName, companyDeployment, agent
       "AGENT": clean(agent) || value("AGENT", "Agent"),
     };
   });
-  const response = await fetch("./Files/2026 Listing Format.xlsx");
-  if (!response.ok) throw new Error(`Template request failed (${response.status}).`);
-  const templateBuffer = await response.arrayBuffer();
-  const book = XLSX.read(templateBuffer, { type: "array", cellStyles: true });
-  const sheetName = book.SheetNames.find(name => /main encoding/i.test(name))
-    || book.SheetNames.find(name => !/guide|read me/i.test(name))
-    || book.SheetNames[0];
-  if (!sheetName) throw new Error("The listing template does not contain a worksheet.");
-  const sheet = book.Sheets[sheetName];
-  const templateMatrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
-  const templateHeaders = templateMatrix[0]?.map(clean) || assumedHeaders;
-  const outputHeaders = Object.keys(output[0] || {});
-  const columnIndexes = outputHeaders.map(header => {
-    const templateColumn = findColumn(templateHeaders, [header]);
-    const index = templateColumn ? templateHeaders.indexOf(templateColumn) : -1;
-    return index >= 0 ? index : outputHeaders.indexOf(header);
-  });
-  const setCellValue = (rowIndex, columnIndex, value) => {
-    const address = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
-    const existing = sheet[address] || {};
-    const cell = { ...existing };
-    if (typeof value === "number" && Number.isFinite(value)) {
-      cell.t = "n";
-      cell.v = value;
-    } else {
-      cell.t = "s";
-      cell.v = String(value ?? "");
-    }
-    sheet[address] = cell;
-  };
-  for (let rowIndex = 0; rowIndex < output.length; rowIndex += 1) {
-    for (let columnIndex = 0; columnIndex < columnIndexes.length; columnIndex += 1) {
-      setCellValue(rowIndex + 1, columnIndexes[columnIndex], output[rowIndex][outputHeaders[columnIndex]]);
+  const sheet = XLSX.utils.json_to_sheet(output);
+  const memberFormulaColumns = [
+    ["F", "first"],
+    ["G", "middle"],
+    ["H", "last"],
+    ["I", "suffix"]
+  ];
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+    const rowNumber = rowIndex + 2;
+    for (const [memberColumn, field] of memberFormulaColumns) {
+      sheet[`${memberColumn}${rowNumber}`] = {
+        t: "s",
+        v: uppercaseValue(rows[rowIndex][field])
+      };
     }
   }
-  const lastColumn = XLSX.utils.encode_col(Math.max(templateHeaders.length, outputHeaders.length) - 1);
+  const lastColumn = XLSX.utils.encode_col(Object.keys(output[0]).length - 1);
   const lastRow = output.length + 1;
-  sheet["!ref"] = `A1:${lastColumn}${lastRow}`;
+  sheet["!autofilter"] = { ref: `A1:${lastColumn}${lastRow}` };
+  sheet["!cols"] = [
+    { wch: 24 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 14 },
+    { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 14 }, { wch: 14 },
+    { wch: 9 }, { wch: 16 }, { wch: 18 }, { wch: 20 }, { wch: 20 },
+    { wch: 18 }, { wch: 28 }, { wch: 14 }, { wch: 14 }
+  ];
+  const border = {
+    top: { style: "thin", color: { rgb: "D9E5EE" } },
+    bottom: { style: "thin", color: { rgb: "D9E5EE" } },
+    left: { style: "thin", color: { rgb: "D9E5EE" } },
+    right: { style: "thin", color: { rgb: "D9E5EE" } }
+  };
+  for (let column = 0; column < Object.keys(output[0]).length; column += 1) {
+    const headerCell = sheet[XLSX.utils.encode_cell({ r: 0, c: column })];
+    headerCell.s = {
+      font: { name: "Aptos Display", sz: 11, bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: "155A85" } },
+      alignment: { horizontal: "center", vertical: "center", wrapText: true },
+      border
+    };
+    for (let row = 1; row < lastRow; row += 1) {
+      const cell = sheet[XLSX.utils.encode_cell({ r: row, c: column })];
+      if (!cell) continue;
+      cell.s = {
+        font: { name: "Aptos", sz: 10, color: { rgb: "17324D" } },
+        fill: { fgColor: { rgb: row % 2 ? "F3F8FC" : "FFFFFF" } },
+        alignment: { vertical: "center", wrapText: true },
+        border
+      };
+    }
+  }
+  sheet["!rows"] = [{ hpt: 30 }, ...Array(output.length).fill({ hpt: 22 })];
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, sheet, "Main Encoding");
   XLSX.writeFile(book, downloadFileName(originalFileName), { cellStyles: true });
 }
 
@@ -482,14 +497,10 @@ function App() {
   };
   const downloadSelected = () => {
     const selected = result?.rows.filter(row => selectedRows.includes(row.id)) || [];
-    if (selected.length) {
-      downloadWorkbook(selected, fileName, companyDeployment, agent)
-        .catch(downloadError => setError(`Could not download the formatted workbook: ${downloadError.message}`));
-    }
+    if (selected.length) downloadWorkbook(selected, fileName, companyDeployment, agent);
   };
   const downloadFormatted = () => {
-    downloadWorkbook(result.rows, fileName, companyDeployment, agent)
-      .catch(downloadError => setError(`Could not download the formatted workbook: ${downloadError.message}`));
+    downloadWorkbook(result.rows, fileName, companyDeployment, agent);
   };
 
   return (
