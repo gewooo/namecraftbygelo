@@ -64,6 +64,18 @@ function dateInputValue(value) {
   return birthDateValue(value);
 }
 
+function parseAccessList(text) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"))
+    .map((line) => {
+      const [username, password, displayName] = line.split("|").map(clean);
+      return { username, password, displayName: displayName || username };
+    })
+    .filter((entry) => entry.username && entry.password);
+}
+
 function birthDateValue(value) {
   const text = clean(value);
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
@@ -501,6 +513,18 @@ function App() {
   const [agentOptions, setAgentOptions] = useState([]);
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
+  const [accessList, setAccessList] = useState([]);
+  const [loginUser, setLoginUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("namecraft-session") || "null");
+    } catch {
+      return null;
+    }
+  });
+  const [loginName, setLoginName] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [accessListLoading, setAccessListLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem("namecraft-dark-mode") === "true",
   );
@@ -510,6 +534,33 @@ function App() {
     document.body.classList.toggle("dark-page", darkMode);
     return () => document.body.classList.remove("dark-page");
   }, [darkMode]);
+
+  useEffect(() => {
+    fetch("./Files/IMS NCR Access List.txt")
+      .then((response) => {
+        if (!response.ok)
+          throw new Error(`Access list request failed (${response.status}).`);
+        return response.text();
+      })
+      .then((text) => {
+        const list = parseAccessList(text);
+        setAccessList(list);
+        setLoginUser((current) =>
+          current &&
+          list.some(
+            (entry) =>
+              entry.username.toLowerCase() ===
+              String(current.username).toLowerCase(),
+          )
+            ? current
+            : null,
+        );
+      })
+      .catch((error) =>
+        setLoginError(`Could not load the access list: ${error.message}`),
+      )
+      .finally(() => setAccessListLoading(false));
+  }, []);
 
   useEffect(() => {
     fetch("./dataset.json")
@@ -744,6 +795,52 @@ function App() {
   const downloadFormatted = () => {
     downloadWorkbook(result.rows, fileName, companyDeployment, agent);
   };
+  const handleLogin = (event) => {
+    event.preventDefault();
+    const username = clean(loginName);
+    const account = accessList.find(
+      (entry) => entry.username.toLowerCase() === username.toLowerCase() &&
+        entry.password === loginPassword,
+    );
+    if (!account) {
+      setLoginError("Invalid username or password.");
+      return;
+    }
+    const session = { username: account.username, displayName: account.displayName };
+    localStorage.setItem("namecraft-session", JSON.stringify(session));
+    setLoginUser(session);
+    setLoginPassword("");
+    setLoginError("");
+  };
+  const handleLogout = () => {
+    localStorage.removeItem("namecraft-session");
+    setLoginUser(null);
+    setLoginName("");
+  };
+
+  if (accessListLoading || !loginUser) {
+    return (
+      <main className={`app-shell login-shell${darkMode ? " dark-mode" : ""}`}>
+        <nav className="topbar">
+          <div className="brand"><span className="brand-mark">N</span><span>namecraft</span></div>
+          <span className="topbar-note">Strictly for IMS NCR operations use</span>
+        </nav>
+        <section className="login-card">
+          <div className="eyebrow"><span className="status-dot"></span> IMS NCR ACCESS</div>
+          <h1>Sign in to continue.</h1>
+          <p>Use the account provided for IMS NCR operations. There is no signup.</p>
+          {accessListLoading ? <p className="login-status">Loading access list…</p> : (
+            <form onSubmit={handleLogin}>
+              <label className="login-field">Username<input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="username" required /></label>
+              <label className="login-field">Password<input type="password" value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} autoComplete="current-password" required /></label>
+              {loginError && <div className="error-banner">{loginError}</div>}
+              <button className="download-button login-button" type="submit">Sign in</button>
+            </form>
+          )}
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className={`app-shell${darkMode ? " dark-mode" : ""}`}>
@@ -763,6 +860,8 @@ function App() {
           <span className="topbar-note">
             Strictly for IMS NCR operations use
           </span>
+          <span className="session-user">{loginUser.displayName}</span>
+          <button className="theme-toggle" type="button" onClick={handleLogout}>LOG OUT</button>
         </div>
       </nav>
 

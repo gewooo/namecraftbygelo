@@ -4,6 +4,8 @@ A browser-only React app for turning Excel name lists into the 19-column IMS Mai
 
 This tool is strictly for IMS NCR operations use.
 
+Access is controlled by `Files/IMS NCR Access List.txt`, using one plain-text account per line in the format `username|password|display name`. There is no signup flow. Successful logins remain active in that browser until the user logs out or browser storage is cleared. This browser-only access list is a convenience gate, not server-side security.
+
 ## Run it
 
 Run a local web server from this folder (for example, `npx serve .`) and open the displayed URL. The app loads React, Babel, SheetJS, and `dataset.json` from the local folder, so no build step is required. Opening the HTML directly via `file://` prevents the browser from loading the dataset.
