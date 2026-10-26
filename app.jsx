@@ -265,10 +265,10 @@ async function downloadWorkbook(rows, originalFileName, companyDeployment, agent
       "Payor Middle Name": row.middle,
       "Payor Last Name": row.last,
       "Payor Suffix": row.suffix,
-      "Member First Name": "",
-      "Member Middle Name": "",
-      "Member Last Name": "",
-      "Member Suffix": "",
+      "Member First Name": uppercaseValue(row.first),
+      "Member Middle Name": uppercaseValue(row.middle),
+      "Member Last Name": uppercaseValue(row.last),
+      "Member Suffix": uppercaseValue(row.suffix),
       "Birth Date": birthDateValue(row.birthDate) || birthDateValue(value("Birth Date", "Birthday", "Date of Birth")),
       "Sex": value("Sex"),
       "Civil Status": value("Civil Status"),
@@ -319,22 +319,6 @@ async function downloadWorkbook(rows, originalFileName, companyDeployment, agent
   const lastColumn = XLSX.utils.encode_col(Math.max(templateHeaders.length, outputHeaders.length) - 1);
   const lastRow = output.length + 1;
   sheet["!ref"] = `A1:${lastColumn}${lastRow}`;
-  sheet["!autofilter"] = { ref: `A1:${lastColumn}${lastRow}` };
-  const memberColumns = [
-    ["F", "first"],
-    ["G", "middle"],
-    ["H", "last"],
-    ["I", "suffix"]
-  ];
-  for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
-    const rowNumber = rowIndex + 2;
-    for (const [memberColumn, field] of memberColumns) {
-      sheet[`${memberColumn}${rowNumber}`] = {
-        t: "s",
-        v: uppercaseValue(rows[rowIndex][field])
-      };
-    }
-  }
   XLSX.writeFile(book, downloadFileName(originalFileName), { cellStyles: true });
 }
 
