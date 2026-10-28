@@ -14,9 +14,7 @@ The planned Supabase structure is:
 2. `agents` — one row per agent, linked to an organization.
 3. `companies` — one row per company/deployment, linked to an organization.
 4. `payments` — one monthly payment record per company, linked to an agent and company.
-5. `payment_members` — optional row-level detail linked to a payment for member count and premium auditing.
-
-The dashboard metrics map to `payments.amount`, `payments.paid_at`, `companies.name`, and the number of distinct `companies` grouped by `agents`. Add Row Level Security so only authorized IMS NCR users can read or write these tables.
+The dashboard metrics map to `payments.amount`, `payments.paid_at`, `companies.name`, and the number of distinct `companies` grouped by `agents`. Keep member counts and premium totals directly on `payments`; no separate member-detail table is needed. Add Row Level Security so only authorized IMS NCR users can read or write these tables.
 
 ## Run it
 
