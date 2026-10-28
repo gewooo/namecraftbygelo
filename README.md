@@ -6,6 +6,8 @@ This tool is strictly for IMS NCR operations use.
 
 Use `See dashboard` to review locally saved company payment totals and agent company counts for the current month. A record is saved when the formatted workbook is downloaded.
 
+The dashboard is designed to require a separate email/password Supabase login. The login interface is currently present, but Supabase authentication still needs to be connected before credentials can be accepted.
+
 ## Supabase hierarchy
 
 The planned Supabase structure is:

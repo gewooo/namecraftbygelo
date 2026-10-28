@@ -542,6 +542,10 @@ function App() {
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showDashboardLogin, setShowDashboardLogin] = useState(false);
+  const [dashboardEmail, setDashboardEmail] = useState("");
+  const [dashboardPassword, setDashboardPassword] = useState("");
+  const [dashboardLoginError, setDashboardLoginError] = useState("");
   const [dashboardRecords, setDashboardRecords] = useState(dashboardRecordsValue);
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem("namecraft-dark-mode") === "true",
@@ -801,6 +805,14 @@ function App() {
     setDashboardRecords(nextRecords);
     downloadWorkbook(result.rows, fileName, companyDeployment, agents);
   };
+  const openDashboard = () => {
+    setShowDashboardLogin(true);
+    setDashboardLoginError("");
+  };
+  const submitDashboardLogin = (event) => {
+    event.preventDefault();
+    setDashboardLoginError("Supabase authentication is not connected yet.");
+  };
   const currentMonth = dashboardMonth();
   const monthRecords = dashboardRecords.filter(
     (record) => dashboardMonth(new Date(record.recordedAt)) === currentMonth,
@@ -856,11 +868,28 @@ function App() {
           <span className="topbar-note">
             Strictly for IMS NCR operations use
           </span>
-          <button className="theme-toggle" type="button" onClick={() => setShowDashboard((current) => !current)}>
+          <button className="theme-toggle" type="button" onClick={() => showDashboard ? setShowDashboard(false) : openDashboard()}>
             {showDashboard ? "FORMATTER" : "SEE DASHBOARD"}
           </button>
         </div>
       </nav>
+
+      {showDashboardLogin && !showDashboard && (
+        <section className="dashboard-login-section">
+          <div className="dashboard-login-card">
+            <div className="eyebrow"><span className="status-dot"></span> IMS NCR DASHBOARD</div>
+            <h2>Sign in to view the dashboard</h2>
+            <p>Use your authorized IMS NCR account. Dashboard access will use Supabase email authentication.</p>
+            <form onSubmit={submitDashboardLogin}>
+              <label className="login-field">Email<input type="email" value={dashboardEmail} onChange={(event) => setDashboardEmail(event.target.value)} autoComplete="email" required /></label>
+              <label className="login-field">Password<input type="password" value={dashboardPassword} onChange={(event) => setDashboardPassword(event.target.value)} autoComplete="current-password" required /></label>
+              {dashboardLoginError && <div className="error-banner">{dashboardLoginError}</div>}
+              <button className="download-button login-button" type="submit">Sign in</button>
+              <button className="secondary-button login-cancel-button" type="button" onClick={() => setShowDashboardLogin(false)}>Cancel</button>
+            </form>
+          </div>
+        </section>
+      )}
 
       {showDashboard ? (
         <section className="dashboard-section">
