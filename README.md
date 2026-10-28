@@ -43,8 +43,6 @@ The Agent inputs fill the `AGENT` column using balanced contiguous ranges. Use t
 
 Each preview row has a Birthday date input. Entered birthdays are exported for their individual rows in `YYYY-MM-DD` format; existing birthday values are preserved and normalized to the same format when left unchanged.
 
-Use `BIRTHDAY TEMPLATE` to download a workbook with `First Name`, `Last Name`, and `Birth Date` columns. After filling it, use `UPLOAD BIRTHDAYS`; the app matches first name + last name and copies each matched birthday into the corresponding preview row.
-
 Agent suggestions are loaded from `Files/LIST OF AGENTS.xlsx`; choices and typed Agent values are saved in uppercase.
 
 The editable preview also shows the membership fee as a number without a currency symbol.
