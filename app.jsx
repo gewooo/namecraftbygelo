@@ -396,8 +396,22 @@ function downloadFileName(originalFileName) {
   return `${cleanedBaseName || "formatted-names"}.xlsx`;
 }
 
-function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
-  const output = rows.map((row) => {
+function agentForRow(index, rowCount, agents) {
+  const activeAgents = agents.map((value) => clean(value).toUpperCase());
+  if (!activeAgents.length) return "";
+  const baseCount = Math.floor(rowCount / activeAgents.length);
+  const remainder = rowCount % activeAgents.length;
+  let start = 0;
+  for (let agentIndex = 0; agentIndex < activeAgents.length; agentIndex += 1) {
+    const count = baseCount + (agentIndex < remainder ? 1 : 0);
+    if (index >= start && index < start + count) return activeAgents[agentIndex];
+    start += count;
+  }
+  return "";
+}
+
+function downloadWorkbook(rows, originalFileName, companyDeployment, agents) {
+  const output = rows.map((row, rowIndex) => {
     const source = row.raw || {};
     const value = (...names) => {
       const column = findColumn(Object.keys(source), names);
@@ -428,7 +442,11 @@ function downloadWorkbook(rows, originalFileName, companyDeployment, agent) {
       Premium: membershipFeeValue(
         value("Premium", "Membership Fee", "Membership Fee (₱)"),
       ),
-      AGENT: clean(agent) || value("AGENT", "Agent"),
+      AGENT: agentForRow(
+        rowIndex,
+        rows.length,
+        agents.length ? agents : [value("AGENT", "Agent")],
+      ) || value("AGENT", "Agent"),
     };
   });
   const sheet = XLSX.utils.json_to_sheet(output);
@@ -519,7 +537,7 @@ function App() {
   const [page, setPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState([]);
   const [companyDeployment, setCompanyDeployment] = useState("");
-  const [agent, setAgent] = useState("");
+  const [agents, setAgents] = useState([""]);
   const [agentOptions, setAgentOptions] = useState([]);
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
@@ -739,7 +757,7 @@ function App() {
       current ? { ...current, rows: current.originalRows } : current,
     );
     setCompanyDeployment("");
-    setAgent("");
+    setAgents([""]);
     setQuery("");
     setPage(1);
     setSelectedRows([]);
@@ -763,14 +781,14 @@ function App() {
     const selected =
       result?.rows.filter((row) => selectedRows.includes(row.id)) || [];
     if (selected.length)
-      downloadWorkbook(selected, fileName, companyDeployment, agent);
+      downloadWorkbook(selected, fileName, companyDeployment, agents);
   };
   const downloadFormatted = () => {
     const company = clean(companyDeployment) || "Unnamed company";
     const record = {
-      id: `${company.toUpperCase()}-${dashboardMonth()}-${clean(agent).toUpperCase()}`,
+      id: `${company.toUpperCase()}-${dashboardMonth()}-${agents.map((value) => clean(value).toUpperCase()).join(",")}`,
       company,
-      agent: clean(agent).toUpperCase() || "Unassigned",
+      agents: agents.map((value) => clean(value).toUpperCase()).filter(Boolean),
       amount: dashboardAmount(result.rows),
       memberCount: result.rows.length,
       recordedAt: new Date().toISOString(),
@@ -781,7 +799,7 @@ function App() {
     ];
     localStorage.setItem("namecraft-dashboard-records", JSON.stringify(nextRecords));
     setDashboardRecords(nextRecords);
-    downloadWorkbook(result.rows, fileName, companyDeployment, agent);
+    downloadWorkbook(result.rows, fileName, companyDeployment, agents);
   };
   const currentMonth = dashboardMonth();
   const monthRecords = dashboardRecords.filter(
@@ -802,17 +820,22 @@ function App() {
     ]),
   ).values()];
   const agentCompanies = [...new Map(
-    monthRecords.map((record) => [
-      record.agent,
-      {
-        agent: record.agent,
-        companies: new Set(
-          monthRecords
-            .filter((item) => item.agent === record.agent)
-            .map((item) => item.company.toUpperCase()),
-        ).size,
-      },
-    ]),
+    monthRecords
+      .flatMap((record) => (record.agents || [record.agent || "Unassigned"]).map((agentName) => ({
+        agent: agentName || "Unassigned",
+        company: record.company,
+      })))
+      .map((entry) => [
+        entry.agent,
+        {
+          agent: entry.agent,
+          companies: new Set(
+            monthRecords
+              .filter((item) => (item.agents || [item.agent || "Unassigned"]).includes(entry.agent))
+              .map((item) => item.company.toUpperCase()),
+          ).size,
+        },
+      ]),
   ).values()];
 
   return (
@@ -969,7 +992,7 @@ function App() {
                   setPage(1);
                   setSelectedRows([]);
                   setCompanyDeployment("");
-                  setAgent("");
+                  setAgents([""]);
                 }}
               >
                 Upload another
@@ -999,17 +1022,35 @@ function App() {
                   placeholder="Type company name"
                 />
               </label>
-              <label className="company-field">
-                Agent
-                <input
-                  list="agent-options"
-                  value={agent}
-                  onChange={(event) =>
-                    setAgent(event.target.value.toUpperCase())
-                  }
-                  placeholder="Type agent name"
-                />
-              </label>
+              <div className="agent-inputs">
+                {agents.map((agentValue, index) => (
+                  <label className="company-field agent-field" key={`agent-${index}`}>
+                    Agent {index + 1}
+                    <span className="agent-control">
+                      <input
+                        list="agent-options"
+                        value={agentValue}
+                        onChange={(event) =>
+                          setAgents((current) => current.map((value, agentIndex) =>
+                            agentIndex === index ? event.target.value.toUpperCase() : value,
+                          ))
+                        }
+                        placeholder="Type agent name"
+                      />
+                      {index === agents.length - 1 && (
+                        <button
+                          className="add-agent-button"
+                          type="button"
+                          title="Add another agent"
+                          onClick={() => setAgents((current) => [...current, ""])}
+                        >
+                          +
+                        </button>
+                      )}
+                    </span>
+                  </label>
+                ))}
+              </div>
               <datalist id="agent-options">
                 {agentOptions.map((option) => (
                   <option key={option} value={option} />

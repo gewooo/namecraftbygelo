@@ -39,7 +39,7 @@ Member First Name, Middle Name, Last Name, and Suffix are exported as Excel `PRO
 
 After upload, the Company / Deployment field can be used to fill that column for every exported row.
 
-The Agent field similarly fills the `AGENT` column for every exported row when provided.
+The Agent inputs fill the `AGENT` column using balanced contiguous ranges. Use the `+` button to add unlimited agents; for example, two agents across 50 rows receive rows 1–25 and 26–50. Each exported cell contains one agent only.
 
 Each preview row has a Birthday date input. Entered birthdays are exported for their individual rows in `YYYY-MM-DD` format; existing birthday values are preserved and normalized to the same format when left unchanged.
 
