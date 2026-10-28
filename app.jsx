@@ -64,6 +64,18 @@ function dateInputValue(value) {
   return birthDateValue(value);
 }
 
+function parseAccessList(text) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"))
+    .map((line) => {
+      const [username, password, displayName] = line.split("|").map(clean);
+      return { username, password, displayName: displayName || username };
+    })
+    .filter((entry) => entry.username && entry.password);
+}
+
 function dashboardRecordsValue() {
   try {
     const records = JSON.parse(localStorage.getItem("namecraft-dashboard-records") || "[]");
@@ -546,6 +558,8 @@ function App() {
   const [dashboardUsername, setDashboardUsername] = useState("");
   const [dashboardPassword, setDashboardPassword] = useState("");
   const [dashboardLoginError, setDashboardLoginError] = useState("");
+  const [accessList, setAccessList] = useState([]);
+  const [accessListLoading, setAccessListLoading] = useState(false);
   const [dashboardRecords, setDashboardRecords] = useState(dashboardRecordsValue);
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem("namecraft-dark-mode") === "true",
@@ -808,10 +822,31 @@ function App() {
   const openDashboard = () => {
     setShowDashboardLogin(true);
     setDashboardLoginError("");
+    setAccessListLoading(true);
+    fetch("./Files/IMS NCR Access List.txt")
+      .then((response) => {
+        if (!response.ok) throw new Error(`Access list request failed (${response.status}).`);
+        return response.text();
+      })
+      .then((text) => setAccessList(parseAccessList(text)))
+      .catch((error) => setDashboardLoginError(`Could not load the access list: ${error.message}`))
+      .finally(() => setAccessListLoading(false));
   };
   const submitDashboardLogin = (event) => {
     event.preventDefault();
-    setDashboardLoginError("Supabase authentication is not connected yet.");
+    const account = accessList.find(
+      (entry) =>
+        entry.username.toLowerCase() === dashboardUsername.trim().toLowerCase() &&
+        entry.password === dashboardPassword,
+    );
+    if (!account) {
+      setDashboardLoginError("Invalid username or password.");
+      return;
+    }
+    setShowDashboardLogin(false);
+    setShowDashboard(true);
+    setDashboardPassword("");
+    setDashboardLoginError("");
   };
   const currentMonth = dashboardMonth();
   const monthRecords = dashboardRecords.filter(
@@ -879,12 +914,12 @@ function App() {
           <div className="dashboard-login-card">
             <div className="eyebrow"><span className="status-dot"></span> IMS NCR DASHBOARD</div>
             <h2>Sign in to view the dashboard</h2>
-            <p>Use your authorized IMS NCR account. Dashboard access will use Supabase email authentication.</p>
+            <p>Use the username and password provided for IMS NCR dashboard access.</p>
             <form onSubmit={submitDashboardLogin}>
               <label className="login-field">Username<input value={dashboardUsername} onChange={(event) => setDashboardUsername(event.target.value)} autoComplete="username" required /></label>
               <label className="login-field">Password<input type="password" value={dashboardPassword} onChange={(event) => setDashboardPassword(event.target.value)} autoComplete="current-password" required /></label>
               {dashboardLoginError && <div className="error-banner">{dashboardLoginError}</div>}
-              <button className="download-button login-button" type="submit">Sign in</button>
+              <button className="download-button login-button" type="submit" disabled={accessListLoading}>{accessListLoading ? "Loading…" : "Sign in"}</button>
               <button className="secondary-button login-cancel-button" type="button" onClick={() => setShowDashboardLogin(false)}>Cancel</button>
             </form>
           </div>

@@ -6,9 +6,9 @@ This tool is strictly for IMS NCR operations use.
 
 Use `See dashboard` to review locally saved company payment totals and agent company counts for the current month. A record is saved when the formatted workbook is downloaded.
 
-The dashboard is designed to require a separate username/password Supabase login. Supabase Auth still creates users with an email and password, so add a unique `username` column to `profiles` and map the entered username to the Auth user before calling `signInWithPassword`. The login interface is currently present, but Supabase authentication still needs to be connected before credentials can be accepted.
+The dashboard requires a local username/password login loaded from `Files/IMS NCR Access List.txt`. Add one account per line using `username|password|display name`. The formatter remains available without signing in. This is a browser-side convenience gate, not server-side security; the file contents are readable by anyone who can access the deployed app.
 
-## Supabase hierarchy
+## Optional Supabase hierarchy
 
 The planned Supabase structure is:
 
@@ -27,7 +27,7 @@ create unique index profiles_username_lower_idx
 on profiles (lower(username));
 ```
 
-Admins create users in Supabase Authentication with an email and password, then connect each Auth user to a profile:
+If Supabase is connected later, admins can create users with an email and password, then connect each Auth user to a profile:
 
 ```sql
 insert into profiles (id, organization_id, username, full_name, role)
@@ -40,7 +40,7 @@ values (
 );
 ```
 
-The final username login should resolve the username to the Auth email through a protected Edge Function, then call Supabase Auth with that email and the entered password. Do not expose a service-role key or the email mapping in the frontend.
+The current app does not require this optional Supabase setup.
 
 ## Run it
 
