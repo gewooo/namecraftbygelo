@@ -555,6 +555,9 @@ function App() {
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
   const [showDashboard, setShowDashboard] = useState(false);
   const [showDashboardLogin, setShowDashboardLogin] = useState(false);
+  const [dashboardAuthenticated, setDashboardAuthenticated] = useState(
+    () => sessionStorage.getItem("namecraft-dashboard-session") === "active",
+  );
   const [dashboardUsername, setDashboardUsername] = useState("");
   const [dashboardPassword, setDashboardPassword] = useState("");
   const [dashboardLoginError, setDashboardLoginError] = useState("");
@@ -820,6 +823,10 @@ function App() {
     downloadWorkbook(result.rows, fileName, companyDeployment, agents);
   };
   const openDashboard = () => {
+    if (dashboardAuthenticated) {
+      setShowDashboard(true);
+      return;
+    }
     setShowDashboardLogin(true);
     setDashboardLoginError("");
     setAccessListLoading(true);
@@ -845,8 +852,18 @@ function App() {
     }
     setShowDashboardLogin(false);
     setShowDashboard(true);
+    setDashboardAuthenticated(true);
+    sessionStorage.setItem("namecraft-dashboard-session", "active");
     setDashboardPassword("");
     setDashboardLoginError("");
+  };
+  const logoutDashboard = () => {
+    sessionStorage.removeItem("namecraft-dashboard-session");
+    setDashboardAuthenticated(false);
+    setShowDashboard(false);
+    setShowDashboardLogin(false);
+    setDashboardUsername("");
+    setDashboardPassword("");
   };
   const currentMonth = dashboardMonth();
   const monthRecords = dashboardRecords.filter(
@@ -931,6 +948,7 @@ function App() {
           <div className="eyebrow"><span className="status-dot"></span> IMS NCR DASHBOARD</div>
           <h1>Payment overview</h1>
           <p className="dashboard-subtitle">Saved locally from formatted downloads · {currentMonth}</p>
+          <button className="secondary-button dashboard-logout-button" type="button" onClick={logoutDashboard}>LOG OUT</button>
           <div className="dashboard-cards">
             <div className="dashboard-card"><span>COMPANIES PAID THIS MONTH</span><strong>{paidCompanies.length}</strong></div>
             <div className="dashboard-card"><span>TOTAL PREMIUM THIS MONTH</span><strong>₱{monthRecords.reduce((total, record) => total + record.amount, 0).toLocaleString()}</strong></div>

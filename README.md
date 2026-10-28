@@ -6,7 +6,7 @@ This tool is strictly for IMS NCR operations use.
 
 Use `See dashboard` to review locally saved company payment totals and agent company counts for the current month. A record is saved when the formatted workbook is downloaded.
 
-The dashboard requires a local username/password login loaded from `Files/IMS NCR Access List.txt`. Add one account per line using `username|password|display name`. The formatter remains available without signing in. This is a browser-side convenience gate, not server-side security; the file contents are readable by anyone who can access the deployed app.
+The dashboard requires a local username/password login loaded from `Files/IMS NCR Access List.txt`. Add one account per line using `username|password|display name`. The formatter remains available without signing in. A successful dashboard session persists through page refreshes using browser session storage, ends when the user logs out, and is cleared when the browser tab/session closes. This is a browser-side convenience gate, not server-side security; the file contents are readable by anyone who can access the deployed app.
 
 ## Optional Supabase hierarchy
 
