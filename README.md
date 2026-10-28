@@ -4,6 +4,20 @@ A browser-only React app for turning Excel name lists into the 19-column IMS Mai
 
 This tool is strictly for IMS NCR operations use.
 
+Use `See dashboard` to review locally saved company payment totals and agent company counts for the current month. A record is saved when the formatted workbook is downloaded.
+
+## Supabase hierarchy
+
+The planned Supabase structure is:
+
+1. `organizations` — IMS NCR organizational scope.
+2. `agents` — one row per agent, linked to an organization.
+3. `companies` — one row per company/deployment, linked to an organization.
+4. `payments` — one monthly payment record per company, linked to an agent and company.
+5. `payment_members` — optional row-level detail linked to a payment for member count and premium auditing.
+
+The dashboard metrics map to `payments.amount`, `payments.paid_at`, `companies.name`, and the number of distinct `companies` grouped by `agents`. Add Row Level Security so only authorized IMS NCR users can read or write these tables.
+
 ## Run it
 
 Run a local web server from this folder (for example, `npx serve .`) and open the displayed URL. The app loads React, Babel, SheetJS, and `dataset.json` from the local folder, so no build step is required. Opening the HTML directly via `file://` prevents the browser from loading the dataset.

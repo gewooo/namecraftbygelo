@@ -64,6 +64,28 @@ function dateInputValue(value) {
   return birthDateValue(value);
 }
 
+function dashboardRecordsValue() {
+  try {
+    const records = JSON.parse(localStorage.getItem("namecraft-dashboard-records") || "[]");
+    return Array.isArray(records) ? records : [];
+  } catch {
+    return [];
+  }
+}
+
+function dashboardAmount(rows) {
+  return rows.reduce((total, row) => {
+    const premium = membershipFeeValue(
+      row.raw?.Premium ?? row.raw?.["Membership Fee"] ?? row.membershipFee,
+    );
+    return total + (typeof premium === "number" ? premium : 0);
+  }, 0);
+}
+
+function dashboardMonth(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 function birthDateValue(value) {
   const text = clean(value);
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
@@ -501,6 +523,8 @@ function App() {
   const [agentOptions, setAgentOptions] = useState([]);
   const [trainingData, setTrainingData] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [dashboardRecords, setDashboardRecords] = useState(dashboardRecordsValue);
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem("namecraft-dark-mode") === "true",
   );
@@ -742,8 +766,55 @@ function App() {
       downloadWorkbook(selected, fileName, companyDeployment, agent);
   };
   const downloadFormatted = () => {
+    const company = clean(companyDeployment) || "Unnamed company";
+    const record = {
+      id: `${company.toUpperCase()}-${dashboardMonth()}-${clean(agent).toUpperCase()}`,
+      company,
+      agent: clean(agent).toUpperCase() || "Unassigned",
+      amount: dashboardAmount(result.rows),
+      memberCount: result.rows.length,
+      recordedAt: new Date().toISOString(),
+    };
+    const nextRecords = [
+      ...dashboardRecords.filter((item) => item.id !== record.id),
+      record,
+    ];
+    localStorage.setItem("namecraft-dashboard-records", JSON.stringify(nextRecords));
+    setDashboardRecords(nextRecords);
     downloadWorkbook(result.rows, fileName, companyDeployment, agent);
   };
+  const currentMonth = dashboardMonth();
+  const monthRecords = dashboardRecords.filter(
+    (record) => dashboardMonth(new Date(record.recordedAt)) === currentMonth,
+  );
+  const paidCompanies = [...new Map(
+    monthRecords.map((record) => [
+      record.company.toUpperCase(),
+      {
+        company: record.company,
+        amount: monthRecords
+          .filter((item) => item.company.toUpperCase() === record.company.toUpperCase())
+          .reduce((total, item) => total + item.amount, 0),
+        memberCount: monthRecords
+          .filter((item) => item.company.toUpperCase() === record.company.toUpperCase())
+          .reduce((total, item) => total + item.memberCount, 0),
+      },
+    ]),
+  ).values()];
+  const agentCompanies = [...new Map(
+    monthRecords.map((record) => [
+      record.agent,
+      {
+        agent: record.agent,
+        companies: new Set(
+          monthRecords
+            .filter((item) => item.agent === record.agent)
+            .map((item) => item.company.toUpperCase()),
+        ).size,
+      },
+    ]),
+  ).values()];
+
   return (
     <main className={`app-shell${darkMode ? " dark-mode" : ""}`}>
       <nav className="topbar">
@@ -762,9 +833,35 @@ function App() {
           <span className="topbar-note">
             Strictly for IMS NCR operations use
           </span>
+          <button className="theme-toggle" type="button" onClick={() => setShowDashboard((current) => !current)}>
+            {showDashboard ? "FORMATTER" : "SEE DASHBOARD"}
+          </button>
         </div>
       </nav>
 
+      {showDashboard ? (
+        <section className="dashboard-section">
+          <div className="eyebrow"><span className="status-dot"></span> IMS NCR DASHBOARD</div>
+          <h1>Payment overview</h1>
+          <p className="dashboard-subtitle">Saved locally from formatted downloads · {currentMonth}</p>
+          <div className="dashboard-cards">
+            <div className="dashboard-card"><span>COMPANIES PAID THIS MONTH</span><strong>{paidCompanies.length}</strong></div>
+            <div className="dashboard-card"><span>TOTAL PREMIUM THIS MONTH</span><strong>₱{monthRecords.reduce((total, record) => total + record.amount, 0).toLocaleString()}</strong></div>
+            <div className="dashboard-card"><span>AGENTS</span><strong>{agentCompanies.length}</strong></div>
+          </div>
+          <div className="dashboard-grid">
+            <div className="dashboard-panel">
+              <h2>Companies paid this month</h2>
+              {paidCompanies.length ? <table className="dashboard-table"><thead><tr><th>Company</th><th>Premium</th><th>Members</th></tr></thead><tbody>{paidCompanies.map((record) => <tr key={record.company}><td>{record.company}</td><td>₱{record.amount.toLocaleString()}</td><td>{record.memberCount}</td></tr>)}</tbody></table> : <p className="dashboard-empty">No downloaded payment records yet.</p>}
+            </div>
+            <div className="dashboard-panel">
+              <h2>Agent company count</h2>
+              {agentCompanies.length ? <table className="dashboard-table"><thead><tr><th>Agent</th><th>Companies</th></tr></thead><tbody>{agentCompanies.map((record) => <tr key={record.agent}><td>{record.agent}</td><td>{record.companies}</td></tr>)}</tbody></table> : <p className="dashboard-empty">Agent records will appear after downloading.</p>}
+            </div>
+          </div>
+          <p className="dashboard-note">Dashboard records are currently stored in this browser. Supabase can replace this local storage layer later.</p>
+        </section>
+      ) : (
       <section className="hero">
         <div className="eyebrow">
           <span className="status-dot"></span> {trainingStatus.toUpperCase()}
@@ -1133,6 +1230,7 @@ function App() {
             <div className="empty-state">No names match “{query}”.</div>
           )}
         </section>
+      )}
       )}
       <footer>
         <span>NAMECRAFT</span>
