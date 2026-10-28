@@ -94,6 +94,75 @@ function birthDateValue(value) {
   return `${match[3]}-${match[1].padStart(2, "0")}-${match[2].padStart(2, "0")}`;
 }
 
+function birthdayMatchKey(first, last) {
+  return `${nameKey(first)}|${nameKey(last)}`;
+}
+
+function readBirthdayWorkbook(file, onComplete, onError) {
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const workbook = XLSX.read(event.target.result, {
+        type: "array",
+        cellDates: true,
+      });
+      const sheetName = workbook.SheetNames[0];
+      const matrix = XLSX.utils
+        .sheet_to_json(workbook.Sheets[sheetName], {
+          header: 1,
+          defval: "",
+          raw: false,
+        })
+        .filter((row) => row.some((value) => clean(value)));
+      if (matrix.length < 2)
+        throw new Error("The birthday workbook must contain headers and data rows.");
+      const headers = matrix[0].map(clean);
+      const firstColumn = findColumn(headers, ["First Name", "Payor First Name"]);
+      const lastColumn = findColumn(headers, ["Last Name", "Payor Last Name"]);
+      const fullColumn = findColumn(headers, ["Full Name", "Payor Name", "Name"]);
+      const birthdayColumn = findColumn(headers, [
+        "Birth Date",
+        "Birthday",
+        "Date of Birth",
+      ]);
+      if ((!firstColumn || !lastColumn) && !fullColumn)
+        throw new Error("Birthday template needs First Name and Last Name columns.");
+      if (!birthdayColumn)
+        throw new Error("Birthday template needs a Birth Date column.");
+      const entries = matrix.slice(1).map((values) => {
+        const row = headers.reduce((record, header, index) => {
+          record[header] = values[index] ?? "";
+          return record;
+        }, {});
+        const parsed = fullColumn ? parseFullName(row[fullColumn]) : null;
+        return {
+          first: clean(firstColumn ? row[firstColumn] : parsed.first),
+          last: clean(lastColumn ? row[lastColumn] : parsed.last),
+          birthDate: birthDateValue(row[birthdayColumn]),
+        };
+      }).filter((entry) => entry.first && entry.last && entry.birthDate);
+      if (!entries.length)
+        throw new Error("No valid birthday rows were found in the uploaded workbook.");
+      onComplete(entries);
+    } catch (error) {
+      onError(error.message || "Unable to read the birthday workbook.");
+    }
+  };
+  reader.onerror = () => onError("Unable to read the birthday workbook.");
+  reader.readAsArrayBuffer(file);
+}
+
+function downloadBirthdayTemplate() {
+  const sheet = XLSX.utils.aoa_to_sheet([
+    ["First Name", "Last Name", "Birth Date"],
+    ["JUAN", "DELA CRUZ", "1990-01-31"],
+  ]);
+  sheet["!cols"] = [{ wch: 24 }, { wch: 24 }, { wch: 16 }];
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, sheet, "Birthdays");
+  XLSX.writeFile(book, "Birthday Upload Template.xlsx");
+}
+
 function headerKey(value) {
   return clean(value)
     .toLowerCase()
@@ -529,6 +598,7 @@ function downloadWorkbook(rows, originalFileName, companyDeployment, agents) {
 
 function App() {
   const inputRef = useRef(null);
+  const birthdayInputRef = useRef(null);
   const [fileName, setFileName] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -543,6 +613,7 @@ function App() {
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
   const [showDashboard, setShowDashboard] = useState(false);
   const [dashboardRecords, setDashboardRecords] = useState(dashboardRecordsValue);
+  const [birthdayStatus, setBirthdayStatus] = useState("");
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem("namecraft-dark-mode") === "true",
   );
@@ -609,7 +680,45 @@ function App() {
     setFileName(file.name);
     setPage(1);
     setSelectedRows([]);
+    setBirthdayStatus("");
     readWorkbook(file, trainingData, setResult, setError);
+  };
+
+  const processBirthdayFile = (file) => {
+    if (!file) return;
+    setError("");
+    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+      setError("Please upload an Excel birthday workbook (.xlsx, .xls, or .csv).");
+      return;
+    }
+    if (!result) {
+      setError("Upload and format the main company workbook first.");
+      return;
+    }
+    readBirthdayWorkbook(
+      file,
+      (entries) => {
+        const birthdayMap = new Map(
+          entries.map((entry) => [
+            birthdayMatchKey(entry.first, entry.last),
+            entry.birthDate,
+          ]),
+        );
+        const matchedRows = result.rows.filter((row) =>
+          birthdayMap.has(birthdayMatchKey(row.first, row.last)),
+        );
+        setResult((current) => current ? {
+          ...current,
+          rows: current.rows.map((row) => {
+            const birthDate = birthdayMap.get(birthdayMatchKey(row.first, row.last));
+            if (!birthDate) return row;
+            return { ...row, birthDate };
+          }),
+        } : current);
+        setBirthdayStatus(`${matchedRows.length} birthday${matchedRows.length === 1 ? "" : "s"} matched from ${file.name}`);
+      },
+      setError,
+    );
   };
 
   const visibleRows =
@@ -758,6 +867,7 @@ function App() {
     );
     setCompanyDeployment("");
     setAgents([""]);
+    setBirthdayStatus("");
     setQuery("");
     setPage(1);
     setSelectedRows([]);
@@ -856,6 +966,19 @@ function App() {
           <span className="topbar-note">
             Strictly for IMS NCR operations use
           </span>
+          <button className="theme-toggle" type="button" onClick={downloadBirthdayTemplate}>
+            BIRTHDAY TEMPLATE
+          </button>
+          <button className="theme-toggle" type="button" onClick={() => birthdayInputRef.current?.click()}>
+            UPLOAD BIRTHDAYS
+          </button>
+          <input
+            ref={birthdayInputRef}
+            className="hidden-file-input"
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={(event) => processBirthdayFile(event.target.files[0])}
+          />
           <button className="theme-toggle" type="button" onClick={() => setShowDashboard((current) => !current)}>
             {showDashboard ? "FORMATTER" : "SEE DASHBOARD"}
           </button>
@@ -978,6 +1101,7 @@ function App() {
               <p className="file-meta">
                 ◫ {fileName} <span>·</span> Sheet: {result.sheetName}
               </p>
+              {birthdayStatus && <p className="birthday-status">{birthdayStatus}</p>}
             </div>
             <div className="actions">
               <button className="secondary-button" onClick={resetFile}>
