@@ -331,7 +331,7 @@ function formatRow(row, headers, trainingData) {
   };
 }
 
-function readWorkbook(file, trainingData, onComplete, onError, idOffset = 0, companyOverride = "") {
+function readWorkbook(file, trainingData, onComplete, onError) {
   const reader = new FileReader();
   reader.onload = (event) => {
     try {
@@ -372,12 +372,8 @@ function readWorkbook(file, trainingData, onComplete, onError, idOffset = 0, com
       if (!rows.length)
         throw new Error("The selected sheet does not contain any data rows.");
       const formatted = rows.map((row, index) => ({
-        id: idOffset + index + 1,
+        id: index + 1,
         ...formatRow(row, headers, trainingData),
-        companyDeployment: companyOverride
-          ? ""
-          : clean(row[findColumn(headers, ["Company / Deployment", "Company", "Deployment"])]),
-        companyDeploymentOverride: companyOverride,
         raw: row,
       }));
       onComplete({
@@ -412,13 +408,6 @@ function downloadFileName(originalFileName) {
   return `${cleanedBaseName || "formatted-names"}.xlsx`;
 }
 
-function companyNameFromFile(fileName) {
-  const extensionIndex = fileName.lastIndexOf(".");
-  const baseName =
-    extensionIndex > 0 ? fileName.slice(0, extensionIndex) : fileName;
-  return clean(baseName);
-}
-
 function agentForRow(index, rowCount, agents) {
   const activeAgents = agents.map((value) => clean(value).toUpperCase());
   if (!activeAgents.length) return "";
@@ -442,9 +431,7 @@ function downloadWorkbook(rows, originalFileName, companyDeployment, agents) {
     };
     return {
       "Company / Deployment":
-        clean(row.companyDeploymentOverride) ||
         clean(companyDeployment) ||
-        clean(row.companyDeployment) ||
         value("Company / Deployment", "Company", "Deployment"),
       "Payor First Name": row.first,
       "Payor Middle Name": row.middle,
@@ -554,7 +541,6 @@ function downloadWorkbook(rows, originalFileName, companyDeployment, agents) {
 
 function App() {
   const inputRef = useRef(null);
-  const addInputRef = useRef(null);
   const [fileName, setFileName] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -645,36 +631,6 @@ function App() {
     setPage(1);
     setSelectedRows([]);
     readWorkbook(file, trainingData, setResult, setError);
-  };
-  const processAdditionalFile = (file) => {
-    if (!file || !result) return;
-    setError("");
-    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
-      setError("Please upload an Excel workbook (.xlsx or .xls) or CSV file.");
-      return;
-    }
-    const companyOverride = companyNameFromFile(file.name);
-    readWorkbook(
-      file,
-      trainingData,
-      (additionalResult) => {
-        setResult((current) => {
-          if (!current) return current;
-          const nextRows = [...current.rows, ...additionalResult.rows];
-          return {
-            ...current,
-            rows: nextRows,
-            originalRows: [...current.originalRows, ...additionalResult.rows],
-          };
-        });
-        setPage(1);
-        setSelectedRows([]);
-      },
-      setError,
-      result.rows.length,
-      companyOverride,
-    );
-    if (addInputRef.current) addInputRef.current.value = "";
   };
 
   const visibleRows =
@@ -1123,20 +1079,6 @@ function App() {
               >
                 Upload another
               </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => addInputRef.current?.click()}
-              >
-                + Add to current
-              </button>
-              <input
-                ref={addInputRef}
-                className="hidden-file-input"
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={(event) => processAdditionalFile(event.target.files[0])}
-              />
               <button
                 className="secondary-button"
                 disabled={!selectedRows.length}

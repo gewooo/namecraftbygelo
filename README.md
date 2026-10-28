@@ -81,8 +81,6 @@ The `ALL` action applies the complete-middle-name change to every row in the upl
 
 Select rows with the checkboxes to download only those rows. The `Download` action downloads only the formatted names workbook.
 
-Use `+ Add to current` to append another workbook below the current list without replacing it. The added workbook must use the same columns. Its filename becomes the Company / Deployment value for its rows; for example, `COMPANY - FREE.xlsx` is added as `COMPANY - FREE`.
-
 Use `Reset file` to discard all row edits and clear the Company / Deployment and Agent values.
 
 Sex is not added automatically; existing `Sex` values are preserved and blank values remain blank.
