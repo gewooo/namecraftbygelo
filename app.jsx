@@ -543,7 +543,7 @@ function App() {
   const [trainingStatus, setTrainingStatus] = useState("Loading dataset…");
   const [showDashboard, setShowDashboard] = useState(false);
   const [showDashboardLogin, setShowDashboardLogin] = useState(false);
-  const [dashboardEmail, setDashboardEmail] = useState("");
+  const [dashboardUsername, setDashboardUsername] = useState("");
   const [dashboardPassword, setDashboardPassword] = useState("");
   const [dashboardLoginError, setDashboardLoginError] = useState("");
   const [dashboardRecords, setDashboardRecords] = useState(dashboardRecordsValue);
@@ -881,7 +881,7 @@ function App() {
             <h2>Sign in to view the dashboard</h2>
             <p>Use your authorized IMS NCR account. Dashboard access will use Supabase email authentication.</p>
             <form onSubmit={submitDashboardLogin}>
-              <label className="login-field">Email<input type="email" value={dashboardEmail} onChange={(event) => setDashboardEmail(event.target.value)} autoComplete="email" required /></label>
+              <label className="login-field">Username<input value={dashboardUsername} onChange={(event) => setDashboardUsername(event.target.value)} autoComplete="username" required /></label>
               <label className="login-field">Password<input type="password" value={dashboardPassword} onChange={(event) => setDashboardPassword(event.target.value)} autoComplete="current-password" required /></label>
               {dashboardLoginError && <div className="error-banner">{dashboardLoginError}</div>}
               <button className="download-button login-button" type="submit">Sign in</button>

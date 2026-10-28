@@ -6,17 +6,41 @@ This tool is strictly for IMS NCR operations use.
 
 Use `See dashboard` to review locally saved company payment totals and agent company counts for the current month. A record is saved when the formatted workbook is downloaded.
 
-The dashboard is designed to require a separate email/password Supabase login. The login interface is currently present, but Supabase authentication still needs to be connected before credentials can be accepted.
+The dashboard is designed to require a separate username/password Supabase login. Supabase Auth still creates users with an email and password, so add a unique `username` column to `profiles` and map the entered username to the Auth user before calling `signInWithPassword`. The login interface is currently present, but Supabase authentication still needs to be connected before credentials can be accepted.
 
 ## Supabase hierarchy
 
 The planned Supabase structure is:
 
 1. `organizations` — IMS NCR organizational scope.
-2. `agents` — one row per agent, linked to an organization.
-3. `companies` — one row per company/deployment, linked to an organization.
-4. `payments` — one monthly payment record per company, linked to an agent and company.
+2. `profiles` — one row per user, linked to an organization, with a unique username.
+3. `agents` — one row per agent, linked to an organization.
+4. `companies` — one row per company/deployment, linked to an organization.
+5. `payments` — one monthly payment record per company, linked to an agent and company.
 The dashboard metrics map to `payments.amount`, `payments.paid_at`, `companies.name`, and the number of distinct `companies` grouped by `agents`. Keep member counts and premium totals directly on `payments`; no separate member-detail table is needed. Add Row Level Security so only authorized IMS NCR users can read or write these tables.
+
+Add username support:
+
+```sql
+alter table profiles add column username text;
+create unique index profiles_username_lower_idx
+on profiles (lower(username));
+```
+
+Admins create users in Supabase Authentication with an email and password, then connect each Auth user to a profile:
+
+```sql
+insert into profiles (id, organization_id, username, full_name, role)
+values (
+  'AUTH_USER_UUID',
+  'IMS_NCR_ORGANIZATION_UUID',
+  'juan.delacruz',
+  'Juan Dela Cruz',
+  'encoder'
+);
+```
+
+The final username login should resolve the username to the Auth email through a protected Edge Function, then call Supabase Auth with that email and the entered password. Do not expose a service-role key or the email mapping in the frontend.
 
 ## Run it
 
