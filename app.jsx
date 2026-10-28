@@ -1175,6 +1175,13 @@ function App() {
                   </label>
                 ))}
               </div>
+              <button
+                className="birthday-upload-button"
+                type="button"
+                onClick={() => birthdayInputRef.current?.click()}
+              >
+                UPLOAD BIRTHDAYS
+              </button>
               <datalist id="agent-options">
                 {agentOptions.map((option) => (
                   <option key={option} value={option} />
