@@ -862,6 +862,7 @@ function App() {
           <p className="dashboard-note">Dashboard records are currently stored in this browser. Supabase can replace this local storage layer later.</p>
         </section>
       ) : (
+      <>
       <section className="hero">
         <div className="eyebrow">
           <span className="status-dot"></span> {trainingStatus.toUpperCase()}
@@ -1231,6 +1232,7 @@ function App() {
           )}
         </section>
       )}
+      </>
       )}
       <footer>
         <span>NAMECRAFT</span>
